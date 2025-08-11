@@ -1,0 +1,36 @@
+export interface Listing {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  rentAdvance: number;
+  bedrooms: number;
+  bathrooms: number;
+  size: number;
+  type: string;
+  buildingType: string;
+  location: string;
+  photos: string[];
+  images: string[];
+  userId: string;
+  landlordId: string;
+  verified: boolean;
+  featured: boolean;
+  premium: boolean;
+  amenities: string[];
+  available: boolean;
+  createdAt: Date;
+  reportedCount: number;
+  landmark: string;
+  securityLevel: 'High' | 'Moderate' | 'Low';
+  securityFeatures: string[];
+  electricityType: 'Prepaid' | 'Postpaid';
+  electricityRange: string;
+  waterAvailability: 'Regular' | 'Irregular' | 'Not available';
+  noiseLevel: 'Quiet' | 'Moderate' | 'Noisy';
+  roadCondition: 'Tiled' | 'Gravel' | 'Rough' | 'Very bad';
+  category: string;
+  geoPoint: { lat: number; lng: number };
+  directionsEnabled: boolean;
+  advancePaymentNumber?: string;
+}

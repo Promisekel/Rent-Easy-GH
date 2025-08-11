@@ -1,0 +1,59 @@
+{
+  "name": "ghana-rental-platform",
+  "version": "1.0.0",
+  "description": "An automated, scalable web platform for renting rooms and apartments in Ghana.",
+  "main": "src/app.tsx",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "dev": "react-scripts start"
+  },
+  "keywords": [
+    "rental",
+    "real-estate",
+    "ghana",
+    "landlords",
+    "renters"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "ajv": "^8.17.1",
+    "axios": "^1.6.0",
+    "firebase": "^10.14.1",
+    "framer-motion": "^10.18.0",
+    "lucide-react": "^0.525.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-firebase-hooks": "^5.1.1",
+    "react-hook-form": "^7.48.0",
+    "react-hot-toast": "^2.5.2",
+    "react-router-dom": "^6.30.1",
+    "validator": "^13.15.15"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/validator": "^13.15.2",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "react-scripts": "5.0.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^4.9.5"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

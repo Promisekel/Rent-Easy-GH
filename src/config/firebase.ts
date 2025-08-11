@@ -4,13 +4,13 @@ import { getFirestore } from 'firebase/firestore';
 import { getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBycgw0XjtoT3j_GyvgCTUHzncAKPs5UzM",
-  authDomain: "easyrentgh25.firebaseapp.com",
-  projectId: "easyrentgh25",
-  storageBucket: "easyrentgh25.firebasestorage.app",
-  messagingSenderId: "824224780519",
-  appId: "1:824224780519:web:0007f11e25a87d590fd242",
-  measurementId: "G-LZVHTQKRQ6"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyBycgw0XjtoT3j_GyvgCTUHzncAKPs5UzM",
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "easyrentgh25.firebaseapp.com",
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "easyrentgh25",
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "easyrentgh25.firebasestorage.app",
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "824224780519",
+  appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:824224780519:web:0007f11e25a87d590fd242",
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || "G-LZVHTQKRQ6"
 };
 
 // Initialize Firebase
@@ -22,8 +22,12 @@ export const auth = getAuth(app);
 // Initialize Cloud Firestore and get a reference to the service
 export const db = getFirestore(app);
 
-// Initialize Analytics
-export const analytics = getAnalytics(app);
+// Initialize Analytics (conditionally for production)
+let analytics: any = null;
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+  analytics = getAnalytics(app);
+}
+export { analytics };
 
 // Google Auth Provider
 export const googleProvider = new GoogleAuthProvider();

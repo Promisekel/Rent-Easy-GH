@@ -1,9 +1,9 @@
 // Cloudinary configuration and upload service
 const CLOUDINARY_CONFIG = {
-  cloudName: 'root',
-  apiKey: '416313624663736',
-  apiSecret: 'hyJxqiguS3y0IZjaodpT-BR43DU',
-  uploadPreset: 'rental_images' // You'll need to create this preset in Cloudinary dashboard
+  cloudName: process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'your-cloud-name',
+  apiKey: process.env.REACT_APP_CLOUDINARY_API_KEY || 'your-api-key',
+  apiSecret: process.env.REACT_APP_CLOUDINARY_API_SECRET || 'your-api-secret', // Don't use in production frontend
+  uploadPreset: process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || 'rental_images'
 };
 
 /**

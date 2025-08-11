@@ -1,0 +1,9 @@
+# Files to ignore during Vercel deployment
+node_modules
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+src/context/strobe.ipynb
+src/context/STROBE-Checklist-Filled-COVID19-Vaccine-Acceptance.docx

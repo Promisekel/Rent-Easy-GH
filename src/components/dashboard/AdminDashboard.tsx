@@ -39,7 +39,7 @@ const AdminDashboard = () => {
                     <ListingCard 
                         key={listing.id} 
                         listing={listing} 
-                        onApprove={() => handleApprove(listing.id)} 
+                        onApprove={() => listing.id && handleApprove(listing.id)} 
                     />
                 ))}
             </div>

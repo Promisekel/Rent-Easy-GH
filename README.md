@@ -127,6 +127,78 @@ The platform uses a modern, mobile-first design with:
 - [ ] Mobile app
 - [ ] Advanced features
 
+## 🚀 Deployment
+
+### Vercel Deployment
+
+This project is configured for deployment on Vercel. Follow these steps:
+
+1. **Fork/Clone this repository**
+
+2. **Set up Cloudinary (for image uploads):**
+   - Create a free Cloudinary account at [cloudinary.com](https://cloudinary.com)
+   - Create an unsigned upload preset named `rental_images`
+   - Get your Cloud Name, API Key, and API Secret from the dashboard
+
+3. **Set up environment variables in Vercel:**
+   ```bash
+   # Firebase Configuration
+   REACT_APP_FIREBASE_API_KEY=your_firebase_api_key
+   REACT_APP_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+   REACT_APP_FIREBASE_PROJECT_ID=your_project_id
+   REACT_APP_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+   REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   REACT_APP_FIREBASE_APP_ID=your_app_id
+   REACT_APP_FIREBASE_MEASUREMENT_ID=your_measurement_id
+   
+   # Cloudinary Configuration
+   REACT_APP_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+   REACT_APP_CLOUDINARY_API_KEY=your_cloudinary_api_key
+   REACT_APP_CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+   REACT_APP_CLOUDINARY_UPLOAD_PRESET=rental_images
+   
+   # Google Maps API
+   REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+   
+   # Paystack Configuration
+   REACT_APP_PAYSTACK_PUBLIC_KEY=your_paystack_public_key
+   ```
+
+4. **Deploy to Vercel:**
+   - Connect your GitHub repository to Vercel
+   - Vercel will automatically detect this as a Create React App project
+   - The `vercel.json` configuration will handle the build and deployment
+
+5. **Build Configuration:**
+   - Build Command: `npm run build`
+   - Output Directory: `build`
+   - Install Command: `npm install`
+
+### Local Development
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Promisekel/Rent-Easy-GH.git
+   cd Rent-Easy-GH
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables:**
+   - Copy `.env.example` to `.env`
+   - Fill in your actual API keys and credentials
+
+4. **Start the development server:**
+   ```bash
+   npm start
+   ```
+
+### 📋 Setup Guides
+- [Cloudinary Setup Guide](./CLOUDINARY_SETUP.md) - Detailed instructions for setting up image uploads
+
 ## 🤝 Contributing
 
 1. Fork the repository

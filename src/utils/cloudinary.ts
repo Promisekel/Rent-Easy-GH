@@ -1,6 +1,6 @@
 // Cloudinary configuration and upload utilities
 const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || "your-cloud-name";
-const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "unsigned_upload_preset";
+const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || "rental_images";
 
 /**
  * Upload image to Cloudinary using unsigned upload
@@ -9,6 +9,9 @@ const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET 
  */
 export const uploadImageToCloudinary = async (file: File): Promise<string> => {
   if (!file) throw new Error('No file provided');
+  
+  // Validate file before upload
+  validateImageFile(file);
   
   const formData = new FormData();
   formData.append('file', file);

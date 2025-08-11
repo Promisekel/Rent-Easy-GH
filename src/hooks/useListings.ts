@@ -25,7 +25,6 @@ const useListings = () => {
                         type: 'apartment',
                         buildingType: 'Apartment',
                         photos: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop'],
-                        images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop'],
                         userId: 'landlord-1',
                         landlordId: 'landlord-1',
                         verified: true,
@@ -33,7 +32,7 @@ const useListings = () => {
                         premium: false,
                         amenities: ['wifi', 'parking', 'security'],
                         available: true,
-                        createdAt: new Date(),
+                        createdAt: new Date().toISOString(),
                         reportedCount: 0,
                         landmark: 'Near A&C Mall',
                         securityLevel: 'High' as const,
@@ -60,7 +59,6 @@ const useListings = () => {
                         type: 'studio',
                         buildingType: 'Studio',
                         photos: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=300&fit=crop'],
-                        images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=300&fit=crop'],
                         userId: 'landlord-2',
                         landlordId: 'landlord-2',
                         verified: false,
@@ -68,7 +66,7 @@ const useListings = () => {
                         premium: false,
                         amenities: ['wifi', 'ac', 'security'],
                         available: true,
-                        createdAt: new Date(),
+                        createdAt: new Date().toISOString(),
                         reportedCount: 0,
                         landmark: 'Near Embassy',
                         securityLevel: 'Moderate' as const,
@@ -125,7 +123,7 @@ const useListings = () => {
             const newListing: Listing = {
                 ...listingData,
                 id: Date.now().toString(),
-                createdAt: new Date()
+                createdAt: new Date().toISOString()
             };
             setListings(prev => [...prev, newListing]);
             return newListing;

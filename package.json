@@ -1,6 +1,7 @@
 {
   "name": "ghana-rental-platform",
   "version": "1.0.0",
+  "homepage": "./",
   "description": "An automated, scalable web platform for renting rooms and apartments in Ghana.",
   "main": "src/app.tsx",
   "scripts": {

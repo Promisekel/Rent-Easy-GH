@@ -17,7 +17,7 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, onContact, onApprove
         <p className="listing-price">GHS {listing.price}</p>
         <p className="listing-location">{listing.location}</p>
         <p className="listing-amenities">
-          Amenities: {listing.amenities.join(', ')}
+          Amenities: {listing.amenities?.join(', ') || 'None specified'}
         </p>
         <div className="flex space-x-2 mt-4">
           {onContact && (
@@ -35,8 +35,8 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, onContact, onApprove
               Approve
             </button>
           )}
-          {onDelete && (
-            <button onClick={() => onDelete(listing.id)} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+          {onDelete && listing.id && (
+            <button onClick={() => onDelete(listing.id!)} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
               Delete
             </button>
           )}

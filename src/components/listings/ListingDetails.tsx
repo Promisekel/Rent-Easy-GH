@@ -27,19 +27,23 @@ const ListingDetails: React.FC = () => {
     return (
         <div className="listing-details">
             <h1>{listing.title}</h1>
-            <img src={listing.photos[0]} alt={listing.title} />
+            {listing.photos?.[0] && <img src={listing.photos[0]} alt={listing.title} />}
             <p>Price: GHS {listing.price}</p>
             <p>Location: {listing.location}</p>
-            <p>Amenities: {listing.amenities.join(', ')}</p>
-            <p>Rent Advance: {listing.rentAdvance} months</p>
-            <p>Building Type: {listing.buildingType}</p>
-            <p>Security Features: {listing.securityFeatures.join(', ')}</p>
-            <p>Electricity: {listing.electricityType} (Range: GHS {listing.electricityRange})</p>
-            <p>Water Availability: {listing.waterAvailability}</p>
-            <p>Noise Level: {listing.noiseLevel}</p>
-            <p>Road Condition: {listing.roadCondition}</p>
-            <p>Landmark: {listing.landmark}</p>
-            <p>Contact: <a href={`tel:${listing.advancePaymentNumber}`}>{listing.advancePaymentNumber}</a></p>
+            <p>Amenities: {listing.amenities?.join(', ') || 'None specified'}</p>
+            {listing.rentAdvance && <p>Rent Advance: {listing.rentAdvance} months</p>}
+            {listing.buildingType && <p>Building Type: {listing.buildingType}</p>}
+            <p>Security Features: {listing.securityFeatures?.join(', ') || 'None specified'}</p>
+            {listing.electricityType && (
+                <p>Electricity: {listing.electricityType} {listing.electricityRange && `(Range: GHS ${listing.electricityRange})`}</p>
+            )}
+            {listing.waterAvailability && <p>Water Availability: {listing.waterAvailability}</p>}
+            {listing.noiseLevel && <p>Noise Level: {listing.noiseLevel}</p>}
+            {listing.roadCondition && <p>Road Condition: {listing.roadCondition}</p>}
+            {listing.landmark && <p>Landmark: {listing.landmark}</p>}
+            {listing.advancePaymentNumber && (
+                <p>Contact: <a href={`tel:${listing.advancePaymentNumber}`}>{listing.advancePaymentNumber}</a></p>
+            )}
         </div>
     );
 };

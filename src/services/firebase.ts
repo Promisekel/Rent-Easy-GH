@@ -18,8 +18,7 @@ let mockListings: Listing[] = [
     type: 'apartment',
     buildingType: 'Apartment',
     location: 'East Legon, Accra',
-    photos: ['/api/placeholder/400/300'],
-    images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop'],
+    photos: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop'],
     userId: 'user1',
     landlordId: 'user1',
     verified: true,
@@ -27,7 +26,7 @@ let mockListings: Listing[] = [
     premium: false,
     amenities: ['WiFi', 'AC', 'Parking', 'Security'],
     available: true,
-    createdAt: new Date(),
+    createdAt: new Date().toISOString(),
     reportedCount: 0,
     landmark: 'Near A&C Mall',
     securityLevel: 'High' as const,
@@ -211,10 +210,10 @@ export const uploadListing = async (listingData: Omit<Listing, 'id' | 'createdAt
   const newListing: Listing = {
     ...listingData,
     id: `listing_${Date.now()}`,
-    createdAt: new Date()
+    createdAt: new Date().toISOString()
   };
   mockListings.push(newListing);
-  return newListing.id;
+  return newListing.id!;
 };
 
 export const approveVerification = async (listingId: string): Promise<void> => {

@@ -16,10 +16,10 @@ This guide will help you set up Cloudinary for image uploads in your Ghana Renta
 
 ### 2. Get Your Cloudinary Credentials
 1. Navigate to your Cloudinary Dashboard
-2. Find these values in the "Product Environment Credentials" section:
-   - **Cloud Name**: `your_cloud_name`
-   - **API Key**: `your_api_key`
-   - **API Secret**: `your_api_secret`
+2. Your credentials are already configured in this project:
+   - **Cloud Name**: `dwwbegf2y`
+   - **API Key**: `416313624663736`
+   - **API Secret**: `hyJxqiguS3y0IZjaodpT-BR43DU`
 
 ### 3. Create Upload Preset
 1. In your Cloudinary Dashboard, go to **Settings** → **Upload**
@@ -44,9 +44,9 @@ Create a `.env` file in your project root:
 
 ```bash
 # Cloudinary Configuration
-REACT_APP_CLOUDINARY_CLOUD_NAME=your_actual_cloud_name
-REACT_APP_CLOUDINARY_API_KEY=your_actual_api_key
-REACT_APP_CLOUDINARY_API_SECRET=your_actual_api_secret
+REACT_APP_CLOUDINARY_CLOUD_NAME=dwwbegf2y
+REACT_APP_CLOUDINARY_API_KEY=416313624663736
+REACT_APP_CLOUDINARY_API_SECRET=hyJxqiguS3y0IZjaodpT-BR43DU
 REACT_APP_CLOUDINARY_UPLOAD_PRESET=rental_images
 ```
 
@@ -54,9 +54,9 @@ REACT_APP_CLOUDINARY_UPLOAD_PRESET=rental_images
 Add these environment variables in your Vercel dashboard:
 
 ```bash
-REACT_APP_CLOUDINARY_CLOUD_NAME=your_actual_cloud_name
-REACT_APP_CLOUDINARY_API_KEY=your_actual_api_key
-REACT_APP_CLOUDINARY_API_SECRET=your_actual_api_secret
+REACT_APP_CLOUDINARY_CLOUD_NAME=dwwbegf2y
+REACT_APP_CLOUDINARY_API_KEY=416313624663736
+REACT_APP_CLOUDINARY_API_SECRET=hyJxqiguS3y0IZjaodpT-BR43DU
 REACT_APP_CLOUDINARY_UPLOAD_PRESET=rental_images
 ```
 

@@ -136,33 +136,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     profileImage?: File
   ) => {
     try {
+      console.log('Starting signup process...', { email, displayName, role });
+      
       const { user } = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('User created successfully:', user.uid);
       
       let photoURL = '';
       
       // Upload profile image if provided
       if (profileImage) {
         try {
+          console.log('Uploading profile image...');
           const uploadResult = await uploadToCloudinary(profileImage) as { url: string };
           photoURL = uploadResult.url;
+          console.log('Profile image uploaded:', photoURL);
         } catch (error) {
           console.warn('Failed to upload profile image:', error);
         }
       }
       
       // Update user profile
+      console.log('Updating user profile...');
       await updateProfile(user, {
         displayName,
         photoURL
       });
       
       // Save to Firestore
-      await saveUserProfile(user, { 
-        displayName, 
-        photoURL,
-        role 
-      });
+      console.log('Saving to Firestore...');
+      try {
+        await saveUserProfile(user, { 
+          displayName, 
+          photoURL,
+          role 
+        });
+        console.log('Firestore save successful!');
+      } catch (firestoreError) {
+        console.warn('Firestore save failed (this is expected if Firestore is not set up):', firestoreError);
+        // Don't throw error - user creation was successful even if Firestore save failed
+      }
       
+      console.log('Signup completed successfully!');
       return user;
     } catch (error) {
       console.error('Sign up error:', error);

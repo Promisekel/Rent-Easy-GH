@@ -46,8 +46,9 @@ const Dashboard: React.FC = () => {
       try {
         const imagesQuery = query(
           collection(db, 'user_images'),
-          where('uid', '==', currentUser.uid),
-          orderBy('uploadedAt', 'desc')
+          where('uid', '==', currentUser.uid)
+          // Temporarily removed orderBy to test if index is the issue
+          // orderBy('uploadedAt', 'desc')
         );
 
         const querySnapshot = await getDocs(imagesQuery);
@@ -62,8 +63,20 @@ const Dashboard: React.FC = () => {
 
         setUserImages(images);
       } catch (error) {
-        console.error('Error fetching user images:', error);
-        toast.error('Failed to load images');
+        console.error('Detailed error fetching user images:', error);
+        console.error('Error code:', (error as any)?.code);
+        console.error('Error message:', (error as any)?.message);
+        
+        // Show more specific error messages
+        if (error && (error as any).code === 'permission-denied') {
+          console.log('Permission denied - rules might not be updated yet');
+          toast.error('Permission denied. Firestore rules may still be updating.');
+        } else if (error && (error as any).code === 'failed-precondition') {
+          console.log('Index required for query');
+          toast.error('Database index required.');
+        } else {
+          toast.error(`Failed to load images: ${(error as any)?.message || 'Unknown error'}`);
+        }
       } finally {
         setLoading(false);
       }
@@ -79,6 +92,23 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Failed to logout');
+    }
+  };
+
+  const testFirestoreConnection = async () => {
+    try {
+      console.log('Testing Firestore connection...');
+      const testQuery = query(
+        collection(db, 'user_images'),
+        where('uid', '==', currentUser?.uid || 'test')
+      );
+      
+      const snapshot = await getDocs(testQuery);
+      console.log('Firestore test successful. Documents found:', snapshot.size);
+      toast.success(`Firestore connected! Found ${snapshot.size} documents.`);
+    } catch (error) {
+      console.error('Firestore test error:', error);
+      toast.error(`Firestore error: ${(error as any)?.code || 'Unknown'}`);
     }
   };
 
@@ -176,6 +206,15 @@ const Dashboard: React.FC = () => {
                 >
                   <Home className="w-4 h-4 mr-2" />
                   Back to Home
+                </motion.button>
+                <motion.button
+                  onClick={testFirestoreConnection}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors duration-200"
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Test DB
                 </motion.button>
                 <motion.button
                   onClick={handleLogout}

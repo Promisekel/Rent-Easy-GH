@@ -152,9 +152,9 @@ This project is configured for deployment on Vercel. Follow these steps:
    REACT_APP_FIREBASE_MEASUREMENT_ID=your_measurement_id
    
    # Cloudinary Configuration
-   REACT_APP_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-   REACT_APP_CLOUDINARY_API_KEY=your_cloudinary_api_key
-   REACT_APP_CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+   REACT_APP_CLOUDINARY_CLOUD_NAME=dwwbegf2y
+   REACT_APP_CLOUDINARY_API_KEY=416313624663736
+   REACT_APP_CLOUDINARY_API_SECRET=hyJxqiguS3y0IZjaodpT-BR43DU
    REACT_APP_CLOUDINARY_UPLOAD_PRESET=rental_images
    
    # Google Maps API

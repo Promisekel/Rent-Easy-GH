@@ -19,6 +19,8 @@ import { useAuth } from '../context/AuthContext';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import ImageUpload from '../components/common/ImageUpload';
+import GalleryModal from '../components/common/GalleryModal';
+import ProfilePictureUpload from '../components/common/ProfilePictureUpload';
 import toast from 'react-hot-toast';
 
 interface UserImage {
@@ -37,6 +39,18 @@ const Dashboard: React.FC = () => {
   const [userImages, setUserImages] = useState<UserImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'profile' | 'images' | 'upload'>('profile');
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+
+  // Handle gallery navigation events
+  useEffect(() => {
+    const handleGalleryNav = (event: CustomEvent) => {
+      setGalleryIndex(event.detail.index);
+    };
+
+    window.addEventListener('gallery-nav', handleGalleryNav as EventListener);
+    return () => window.removeEventListener('gallery-nav', handleGalleryNav as EventListener);
+  }, []);
 
   // Fetch user images
   useEffect(() => {
@@ -92,23 +106,6 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Failed to logout');
-    }
-  };
-
-  const testFirestoreConnection = async () => {
-    try {
-      console.log('Testing Firestore connection...');
-      const testQuery = query(
-        collection(db, 'user_images'),
-        where('uid', '==', currentUser?.uid || 'test')
-      );
-      
-      const snapshot = await getDocs(testQuery);
-      console.log('Firestore test successful. Documents found:', snapshot.size);
-      toast.success(`Firestore connected! Found ${snapshot.size} documents.`);
-    } catch (error) {
-      console.error('Firestore test error:', error);
-      toast.error(`Firestore error: ${(error as any)?.code || 'Unknown'}`);
     }
   };
 
@@ -208,15 +205,6 @@ const Dashboard: React.FC = () => {
                   Back to Home
                 </motion.button>
                 <motion.button
-                  onClick={testFirestoreConnection}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors duration-200"
-                >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Test DB
-                </motion.button>
-                <motion.button
                   onClick={handleLogout}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -267,17 +255,9 @@ const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Avatar and Basic Info */}
                   <div className="text-center md:text-left">
-                    <div className="w-32 h-32 mx-auto md:mx-0 mb-4 rounded-full overflow-hidden bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
-                      {currentUser.photoURL ? (
-                        <img
-                          src={currentUser.photoURL}
-                          alt="Profile"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <User className="w-16 h-16 text-white" />
-                      )}
-                    </div>
+                    <ProfilePictureUpload 
+                      currentPhotoURL={userProfile?.photoURL || currentUser?.photoURL || undefined}
+                    />
                     <h3 className="text-xl font-bold text-gray-900 mb-2">
                       {currentUser.displayName || 'User'}
                     </h3>
@@ -365,12 +345,16 @@ const Dashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {userImages.map((image) => (
+                    {userImages.map((image, idx) => (
                       <motion.div
                         key={image.id}
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="group relative bg-gray-50 rounded-xl overflow-hidden"
+                        className="group relative bg-gray-50 rounded-xl overflow-hidden cursor-pointer"
+                        onClick={() => {
+                          setGalleryIndex(idx);
+                          setGalleryOpen(true);
+                        }}
                       >
                         <div className="aspect-square">
                           <img
@@ -391,6 +375,13 @@ const Dashboard: React.FC = () => {
                       </motion.div>
                     ))}
                   </div>
+                )}
+                {galleryOpen && (
+                  <GalleryModal
+                    images={userImages.map(img => ({ url: img.url, id: img.id }))}
+                    activeIndex={galleryIndex}
+                    onClose={() => setGalleryOpen(false)}
+                  />
                 )}
               </div>
             )}

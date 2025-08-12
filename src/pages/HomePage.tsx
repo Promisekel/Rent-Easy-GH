@@ -1,8 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Search, MapPin, Shield, Star, Heart, ArrowRight, Home, Users, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, MapPin, Shield, Star, Heart, ArrowRight, Home, Users, CheckCircle, Bed, Bath, Eye } from 'lucide-react';
 
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -62,6 +64,43 @@ const HomePage: React.FC = () => {
       title: "Premium Experience",
       description: "Enjoy premium features like virtual tours, instant messaging, and priority support for the best experience.",
       color: "from-purple-500 to-purple-600"
+    }
+  ];
+
+  // Featured properties for homepage preview
+  const featuredProperties = [
+    {
+      id: '1',
+      title: 'Modern 2BR Apartment in East Legon',
+      location: 'East Legon, Accra',
+      price: 1800,
+      image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+      bedrooms: 2,
+      bathrooms: 2,
+      rating: 4.8,
+      type: 'apartment'
+    },
+    {
+      id: '2',
+      title: 'Luxury Villa with Pool in Cantonments',
+      location: 'Cantonments, Accra',
+      price: 3500,
+      image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+      bedrooms: 4,
+      bathrooms: 3,
+      rating: 4.9,
+      type: 'house'
+    },
+    {
+      id: '3',
+      title: 'Cozy Studio in Osu',
+      location: 'Osu, Accra',
+      price: 800,
+      image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+      bedrooms: 1,
+      bathrooms: 1,
+      rating: 4.6,
+      type: 'studio'
     }
   ];
 
@@ -152,6 +191,7 @@ const HomePage: React.FC = () => {
               className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6"
             >
               <motion.button 
+                onClick={() => navigate('/browse')}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 className="btn-primary px-8 py-4 text-lg rounded-xl group w-full sm:w-auto"
@@ -160,6 +200,7 @@ const HomePage: React.FC = () => {
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </motion.button>
               <motion.button 
+                onClick={() => navigate('/add-listing')}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 className="btn-secondary px-8 py-4 text-lg rounded-xl w-full sm:w-auto"
@@ -169,6 +210,126 @@ const HomePage: React.FC = () => {
             </motion.div>
           </div>
         </motion.div>
+      </section>
+
+      {/* Featured Properties Preview Section */}
+      <section className="py-20 bg-gradient-to-br from-gray-50 via-white to-blue-50" id="featured-properties">
+        <div className="container mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-display font-bold text-gray-900 mb-6">
+              🏠 Featured Properties
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Discover some of our most popular rental properties across Ghana. Find your perfect match today!
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            {featuredProperties.map((property, index) => (
+              <motion.div
+                key={property.id}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: index * 0.2 }}
+                viewport={{ once: true }}
+                whileHover={{ y: -8, scale: 1.02 }}
+                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer"
+                onClick={() => navigate('/browse')}
+              >
+                <div className="relative overflow-hidden">
+                  <img
+                    src={property.image}
+                    alt={property.title}
+                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute top-4 right-4">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-white bg-opacity-90 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-opacity-100 transition-all duration-300"
+                    >
+                      <Heart className="w-5 h-5 text-gray-600 hover:text-red-500 transition-colors duration-300" />
+                    </motion.button>
+                  </div>
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-sm font-semibold capitalize">
+                      {property.type}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300 truncate">
+                      {property.title}
+                    </h3>
+                    <div className="flex items-center">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 mr-1" />
+                      <span className="text-sm font-semibold text-gray-700">{property.rating}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center text-gray-600 mb-4">
+                    <MapPin className="w-4 h-4 mr-2" />
+                    <span className="text-sm">{property.location}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-4 text-gray-600">
+                      <div className="flex items-center">
+                        <Bed className="w-4 h-4 mr-1" />
+                        <span className="text-sm">{property.bedrooms}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Bath className="w-4 h-4 mr-1" />
+                        <span className="text-sm">{property.bathrooms}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-blue-600">
+                      ₵{property.price.toLocaleString()}
+                      <span className="text-sm font-normal text-gray-500">/month</span>
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      View
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mt-12"
+          >
+            <motion.button
+              onClick={() => navigate('/browse')}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold px-8 py-4 rounded-xl hover:shadow-xl transition-all duration-300 inline-flex items-center"
+            >
+              View All Properties
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </motion.button>
+          </motion.div>
+        </div>
       </section>
 
       {/* Stats Section */}
@@ -365,6 +526,126 @@ const HomePage: React.FC = () => {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Featured Properties Preview Section */}
+      <section className="py-20 bg-gradient-to-br from-gray-50 via-white to-blue-50" id="featured-properties">
+        <div className="container mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-display font-bold text-gray-900 mb-6">
+              🏠 Featured Properties
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Discover some of our most popular rental properties across Ghana. Find your perfect match today!
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            {featuredProperties.map((property, index) => (
+              <motion.div
+                key={property.id}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: index * 0.2 }}
+                viewport={{ once: true }}
+                whileHover={{ y: -8, scale: 1.02 }}
+                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer"
+                onClick={() => navigate('/browse')}
+              >
+                <div className="relative overflow-hidden">
+                  <img
+                    src={property.image}
+                    alt={property.title}
+                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute top-4 right-4">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-white bg-opacity-90 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-opacity-100 transition-all duration-300"
+                    >
+                      <Heart className="w-5 h-5 text-gray-600 hover:text-red-500 transition-colors duration-300" />
+                    </motion.button>
+                  </div>
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-sm font-semibold capitalize">
+                      {property.type}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300 truncate">
+                      {property.title}
+                    </h3>
+                    <div className="flex items-center">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 mr-1" />
+                      <span className="text-sm font-semibold text-gray-700">{property.rating}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center text-gray-600 mb-4">
+                    <MapPin className="w-4 h-4 mr-2" />
+                    <span className="text-sm">{property.location}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-4 text-gray-600">
+                      <div className="flex items-center">
+                        <Bed className="w-4 h-4 mr-1" />
+                        <span className="text-sm">{property.bedrooms}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Bath className="w-4 h-4 mr-1" />
+                        <span className="text-sm">{property.bathrooms}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-blue-600">
+                      ₵{property.price.toLocaleString()}
+                      <span className="text-sm font-normal text-gray-500">/month</span>
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      View
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mt-12"
+          >
+            <motion.button
+              onClick={() => navigate('/browse')}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold px-8 py-4 rounded-xl hover:shadow-xl transition-all duration-300 inline-flex items-center"
+            >
+              View All Properties
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </motion.button>
+          </motion.div>
         </div>
       </section>
 

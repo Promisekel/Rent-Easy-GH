@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import HomePage from './pages/HomePage';
+import BrowseListingsPage from './pages/BrowseListingsPage';
 import ListingDetailsPage from './pages/ListingDetailsPage';
 import AddListingPage from './pages/AddListingPage';
 import DashboardPage from './pages/DashboardPage';
@@ -67,6 +68,7 @@ const AppContent: React.FC = () => {
           <main className="flex-1 pt-24">
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/browse" element={<BrowseListingsPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/listing/:id" element={<ListingDetailsPage />} />
               <Route path="/add-listing" element={<AddListingPage />} />

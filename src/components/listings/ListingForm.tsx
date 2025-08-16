@@ -2,13 +2,24 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { uploadListing } from '../../services/firebase';
 import { Listing } from '../../types/Listing';
-import ImageUpload from '../common/ImageUpload';
+import ListingImageUploader from './ListingImageUploader';
 import toast from 'react-hot-toast';
+
+interface ListingImage {
+  id: string;
+  url: string;
+  publicId: string;
+  width: number;
+  height: number;
+  bytes: number;
+  isCover: boolean;
+}
 
 const ListingForm: React.FC = () => {
     const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<Listing>();
     const [loading, setLoading] = useState(false);
-    const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+    const [listingImages, setListingImages] = useState<ListingImage[]>([]);
+    const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
     
     const onSubmit = async (data: Listing) => {
         setLoading(true);
@@ -17,7 +28,8 @@ const ListingForm: React.FC = () => {
             // Include uploaded image URLs in the listing data
             const listingData = {
                 ...data,
-                photos: uploadedImages,
+                photos: listingImages.map(img => img.url),
+                coverPhoto: coverImageUrl,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             };
@@ -26,7 +38,8 @@ const ListingForm: React.FC = () => {
             toast.success('Listing uploaded successfully!');
             
             // Reset form
-            setUploadedImages([]);
+            setListingImages([]);
+            setCoverImageUrl(null);
             // You might want to redirect or reset the form here
             
         } catch (error) {
@@ -37,9 +50,13 @@ const ListingForm: React.FC = () => {
         }
     };
 
-    const handleImageUpload = (urls: string[]) => {
-        setUploadedImages(prev => [...prev, ...urls]);
-        setValue('photos', [...uploadedImages, ...urls]);
+    const handleImagesChange = (images: ListingImage[]) => {
+        setListingImages(images);
+        setValue('photos', images.map(img => img.url));
+    };
+
+    const handleCoverImageChange = (url: string | null) => {
+        setCoverImageUrl(url);
     };
 
     return (
@@ -99,26 +116,16 @@ const ListingForm: React.FC = () => {
                 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Property Photos ({uploadedImages.length}/5)
+                        Property Photos ({listingImages.length}/10)
                     </label>
-                    <ImageUpload
-                        multiple={true}
-                        maxFiles={5}
-                        onUploadComplete={handleImageUpload}
+                    <ListingImageUploader
+                        onImagesChange={handleImagesChange}
+                        onCoverImageChange={handleCoverImageChange}
+                        maxFiles={10}
+                        allowReorder={true}
+                        showImageInfo={true}
                         className="mb-4"
                     />
-                    {uploadedImages.length > 0 && (
-                        <div className="grid grid-cols-3 gap-2 mt-4">
-                            {uploadedImages.map((url, index) => (
-                                <img
-                                    key={index}
-                                    src={url}
-                                    alt={`Property ${index + 1}`}
-                                    className="w-full h-24 object-cover rounded-lg border"
-                                />
-                            ))}
-                        </div>
-                    )}
                 </div>
                 
                 <div>
@@ -133,13 +140,13 @@ const ListingForm: React.FC = () => {
                 
                 <button 
                     type="submit" 
-                    disabled={loading || uploadedImages.length === 0}
+                    disabled={loading || listingImages.length === 0}
                     className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-200"
                 >
                     {loading ? 'Uploading...' : 'Submit Listing'}
                 </button>
                 
-                {uploadedImages.length === 0 && (
+                {listingImages.length === 0 && (
                     <p className="text-sm text-gray-500 text-center">
                         Please upload at least one photo before submitting
                     </p>

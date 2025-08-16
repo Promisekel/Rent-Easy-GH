@@ -20,6 +20,7 @@ import {
   Upload,
   CheckCircle
 } from 'lucide-react';
+import ImageUpload from '../components/common/ImageUpload';
 
 const AddListingPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -80,11 +81,19 @@ const AddListingPage: React.FC = () => {
   };
 
   const nextStep = () => {
-    if (currentStep < 4) setCurrentStep(currentStep + 1);
+    if (currentStep < 4) {
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   const prevStep = () => {
-    if (currentStep > 1) setCurrentStep(currentStep - 1);
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleImageUpload = (imageUrls: string[]) => {
+    setUploadedImages(prev => [...prev, ...imageUrls]);
   };
 
   const renderStepIndicator = () => (
@@ -268,27 +277,37 @@ const AddListingPage: React.FC = () => {
         <p className="text-gray-600 max-w-2xl mx-auto">Upload high-quality photos to showcase your property</p>
       </div>
 
-      <motion.div variants={itemVariants} className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-primary-400 transition-colors duration-200">
-        <Upload className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Upload Property Photos</h3>
-        <p className="text-gray-600 mb-6">Drag and drop your photos here, or click to browse</p>
-        <button className="btn-primary">
-          <Camera className="w-5 h-5 mr-2" />
-          Choose Photos
-        </button>
-        <p className="text-sm text-gray-500 mt-4">Recommended: Upload at least 5 high-quality photos</p>
+      <motion.div variants={itemVariants}>
+        <ImageUpload
+          multiple={true}
+          maxFiles={10}
+          onUploadComplete={handleImageUpload}
+          className="w-full"
+        />
       </motion.div>
 
       {uploadedImages.length > 0 && (
-        <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {uploadedImages.map((image, index) => (
-            <div key={index} className="relative group">
-              <img src={image} alt={`Property ${index + 1}`} className="w-full h-32 object-cover rounded-lg" />
-              <button className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
+        <motion.div variants={itemVariants} className="mt-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Uploaded Images ({uploadedImages.length})
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {uploadedImages.map((imageUrl, index) => (
+              <div key={index} className="relative group">
+                <img 
+                  src={imageUrl} 
+                  alt={`Property ${index + 1}`} 
+                  className="w-full h-32 object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200" 
+                />
+                <button 
+                  onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== index))}
+                  className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
         </motion.div>
       )}
     </motion.div>

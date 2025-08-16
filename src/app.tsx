@@ -15,6 +15,7 @@ import AppLoader from './components/common/AppLoader';
 import AuthForm from './components/auth/AuthForm';
 import LoginForm from './components/auth/LoginForm';
 import UserProfile from './components/auth/UserProfile';
+import CloudinaryUploadTest from './components/CloudinaryUploadTest';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './styles/globals.css';
 
@@ -75,6 +76,7 @@ const AppContent: React.FC = () => {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/my-dashboard" element={<Dashboard />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/test-cloudinary" element={<CloudinaryUploadTest />} />
             </Routes>
           </main>
           <Footer />

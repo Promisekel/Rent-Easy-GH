@@ -187,11 +187,19 @@ const ListingImageUploader: React.FC<ListingImageUploaderProps> = ({
         setImages(prev => [...prev, tempImage]);
 
         try {
+          // Show loading toast for the upload
+          const loadingToastId = toast.loading(`Uploading ${file.name}...`, {
+            duration: Infinity
+          });
+
           const result = await uploadToCloudinary(compressedFile, (progress: number) => {
             setImages(prev => prev.map(img => 
               img.id === id ? { ...img, progress } : img
             ));
           });
+
+          // Dismiss loading toast
+          toast.dismiss(loadingToastId);
 
           const uploadedImage: ListingImage = {
             id,
@@ -225,9 +233,38 @@ const ListingImageUploader: React.FC<ListingImageUploaderProps> = ({
           return uploadedImage;
         } catch (error) {
           console.error('Upload error for file:', file.name, error);
+          
+          // Determine error message
+          let errorMessage = 'Upload failed';
+          if (error instanceof Error) {
+            if (error.message.includes('Upload preset must be whitelisted')) {
+              errorMessage = 'Upload configuration error. Please contact support.';
+            } else if (error.message.includes('File size too large')) {
+              errorMessage = 'File is too large. Maximum 15MB allowed.';
+            } else if (error.message.includes('Invalid file type')) {
+              errorMessage = 'Invalid file type. Only JPEG, PNG, and WebP are allowed.';
+            } else {
+              errorMessage = error.message;
+            }
+          } else if (typeof error === 'string') {
+            errorMessage = error;
+          }
+
+          // Update image with error state
           setImages(prev => prev.map(img => 
-            img.id === id ? { ...img, error: 'Upload failed', uploading: false } : img
+            img.id === id ? { 
+              ...img, 
+              error: errorMessage, 
+              uploading: false,
+              progress: 0
+            } : img
           ));
+          
+          // Show user-friendly error message
+          toast.error(`Failed to upload ${file.name}: ${errorMessage}`, {
+            duration: 5000,
+            icon: '❌'
+          });
           throw error;
         }
       });

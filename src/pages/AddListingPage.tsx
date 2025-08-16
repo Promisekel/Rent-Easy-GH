@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   Home, 
   MapPin, 
@@ -29,6 +30,7 @@ import {
 } from 'lucide-react';
 import ListingImageUploader from '../components/listings/ListingImageUploader';
 import { uploadListing } from '../services/firebase';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 interface ListingData {
@@ -58,6 +60,8 @@ interface ListingImage {
 }
 
 const AddListingPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [listingImages, setListingImages] = useState<ListingImage[]>([]);
@@ -66,6 +70,14 @@ const AddListingPage: React.FC = () => {
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedPropertyType, setSelectedPropertyType] = useState<string>('');
   const [isPublishing, setIsPublishing] = useState(false);
+
+  // Check if user is authenticated
+  useEffect(() => {
+    if (!currentUser) {
+      toast.error('Please login to add a property listing');
+      navigate('/auth');
+    }
+  }, [currentUser, navigate]);
   
   // Form data state - persisted across steps
   const [listingData, setListingData] = useState<ListingData>({
@@ -190,6 +202,12 @@ const AddListingPage: React.FC = () => {
   };
 
   const publishListing = async () => {
+    if (!currentUser) {
+      toast.error('Please login to publish a listing');
+      navigate('/auth');
+      return;
+    }
+
     if (listingImages.length === 0) {
       toast.error('Please upload at least one image');
       return;
@@ -210,7 +228,8 @@ const AddListingPage: React.FC = () => {
         description: listingData.description,
         amenities: selectedFeatures,
         photos: listingImages.map(img => img.url),
-        landlordId: 'current-user-id', // Replace with actual user ID
+        landlordId: currentUser.uid, // Use actual authenticated user ID
+        userId: currentUser.uid, // Add userId for consistency
         rentAdvance: 1,
         propertyType: listingData.propertyType,
         bedrooms: parseInt(listingData.bedrooms),
@@ -221,7 +240,11 @@ const AddListingPage: React.FC = () => {
         phoneNumber: listingData.phoneNumber,
         emailAddress: listingData.emailAddress,
         securityDeposit: parseFloat(listingData.securityDeposit) || 0,
-        additionalFeatures: listingData.additionalFeatures
+        additionalFeatures: listingData.additionalFeatures,
+        createdAt: new Date().toISOString(),
+        available: true,
+        verified: false,
+        featured: false
       };
 
       await uploadListing(listingPayload);

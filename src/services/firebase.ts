@@ -213,7 +213,15 @@ export const uploadListing = async (listingData: Omit<Listing, 'id' | 'createdAt
     createdAt: new Date().toISOString()
   };
   mockListings.push(newListing);
+  console.log('New listing added:', newListing.title);
+  console.log('Total listings:', mockListings.length);
   return newListing.id!;
+};
+
+export const getListings = async (): Promise<Listing[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return [...mockListings]; // Return a copy of the listings
 };
 
 export const approveVerification = async (listingId: string): Promise<void> => {

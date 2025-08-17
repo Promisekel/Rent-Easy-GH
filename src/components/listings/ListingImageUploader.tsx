@@ -15,7 +15,8 @@ import {
   Eye,
   Maximize2
 } from 'lucide-react';
-import { uploadToCloudinary } from '../../services/cloudinary';
+import { workingUploadToCloudinary } from '../../utils/workingUpload';
+import directUploadToCloudinary from '../../utils/directUpload';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
@@ -192,7 +193,7 @@ const ListingImageUploader: React.FC<ListingImageUploaderProps> = ({
             duration: Infinity
           });
 
-          const result = await uploadToCloudinary(compressedFile, (progress: number) => {
+          const result = await directUploadToCloudinary(compressedFile, (progress: number) => {
             setImages(prev => prev.map(img => 
               img.id === id ? { ...img, progress } : img
             ));

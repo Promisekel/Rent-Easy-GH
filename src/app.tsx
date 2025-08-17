@@ -21,6 +21,8 @@ import CloudinaryQuickTest from './components/CloudinaryQuickTest';
 import CloudinaryDirectTest from './components/CloudinaryDirectTest';
 import CloudinaryPresetTester from './components/CloudinaryPresetTester';
 import CloudinarySignedUpload from './components/CloudinarySignedUpload';
+import DirectUploadTest from './components/DirectUploadTest';
+import SideBySideUploadTest from './components/SideBySideUploadTest';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './styles/globals.css';
 
@@ -87,6 +89,8 @@ const AppContent: React.FC = () => {
               <Route path="/cloudinary-direct-test" element={<CloudinaryDirectTest />} />
               <Route path="/cloudinary-preset-tester" element={<CloudinaryPresetTester />} />
               <Route path="/cloudinary-signed-upload" element={<CloudinarySignedUpload />} />
+              <Route path="/direct-upload-test" element={<DirectUploadTest />} />
+              <Route path="/side-by-side-test" element={<SideBySideUploadTest />} />
             </Routes>
           </main>
           <Footer />

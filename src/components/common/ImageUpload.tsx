@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, X, Camera, Image as ImageIcon, CheckCircle, AlertCircle } from 'lucide-react';
-import { uploadToCloudinary, uploadMultipleToCloudinary } from '../../services/cloudinary';
+import directUploadToCloudinary from '../../utils/directUpload';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
@@ -97,7 +97,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
           setImages(prev => [...prev, tempImage]);
 
-          return uploadToCloudinary(file, (progress: number) => {
+          return directUploadToCloudinary(file, (progress: number) => {
             setImages(prev => prev.map((img, i) => 
               i === prev.length - fileArray.length + index 
                 ? { ...img, progress }
@@ -158,7 +158,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
         setImages([tempImage]);
 
-        const result = await uploadToCloudinary(file, (progress: number) => {
+        const result = await directUploadToCloudinary(file, (progress: number) => {
           setImages(prev => [{ ...prev[0], progress }]);
         });
 

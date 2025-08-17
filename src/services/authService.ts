@@ -9,7 +9,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../config/firebase';
-import { uploadToCloudinary } from './cloudinary';
+import { workingUploadToCloudinary } from '../utils/workingUpload';
 
 export interface UserProfile {
   uid: string;
@@ -76,7 +76,7 @@ export const signUpWithEmailAndPassword = async (
     // Upload profile image if provided
     if (profileImage) {
       try {
-        const uploadResult = await uploadToCloudinary(profileImage) as { url: string };
+        const uploadResult = await workingUploadToCloudinary(profileImage) as { url: string };
         photoURL = uploadResult.url;
       } catch (error) {
         console.warn('Failed to upload profile image:', error);

@@ -10,7 +10,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../config/firebase';
-import { uploadToCloudinary } from '../services/cloudinary';
+import { workingUploadToCloudinary } from '../utils/workingUpload';
 import toast from 'react-hot-toast';
 
 export interface UserProfile {
@@ -147,7 +147,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (profileImage) {
         try {
           console.log('Uploading profile image...');
-          const uploadResult = await uploadToCloudinary(profileImage) as { url: string };
+          const uploadResult = await workingUploadToCloudinary(profileImage) as { url: string };
           photoURL = uploadResult.url;
           console.log('Profile image uploaded:', photoURL);
         } catch (error) {

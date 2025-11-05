@@ -29,7 +29,7 @@ const ListingForm: React.FC = () => {
             const listingData = {
                 ...data,
                 photos: listingImages.map(img => img.url),
-                coverPhoto: coverImageUrl,
+                coverPhoto: coverImageUrl ?? undefined,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             };

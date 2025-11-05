@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
 import { 
   createUserWithEmailAndPassword, 
@@ -8,10 +8,9 @@ import {
   updateProfile,
   sendPasswordResetEmail
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp, collection, addDoc, DocumentData } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../config/firebase';
 import { workingUploadToCloudinary } from '../utils/workingUpload';
-import toast from 'react-hot-toast';
 
 export interface UserProfile {
   uid: string;
@@ -21,8 +20,8 @@ export interface UserProfile {
   provider: string;
   role: 'landlord' | 'renter' | 'admin';
   verified: boolean;
-  createdAt: any;
-  updatedAt: any;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 interface AuthContextType {
@@ -34,6 +33,7 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<FirebaseUser>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  refreshUserProfile: () => Promise<UserProfile | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,39 +50,121 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const toIsoString = (value: unknown): string | null => {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (typeof value === 'object' && value !== null && 'toDate' in (value as Record<string, unknown>)) {
+    try {
+      const date = (value as { toDate: () => Date }).toDate();
+      return date.toISOString();
+    } catch (error) {
+      console.warn('AuthContext: failed to convert Firestore timestamp', error);
+    }
+  }
+
+  return null;
+};
+
+const normalizeUserProfile = (
+  uid: string,
+  data: DocumentData | undefined,
+  defaults: Partial<UserProfile> = {}
+): UserProfile => {
+  const safeData = data ?? {};
+
+  const email = safeData.email ?? defaults.email ?? '';
+  const displayName = safeData.displayName ?? defaults.displayName ?? email.split('@')[0] ?? 'User';
+  const photoURL = safeData.photoURL ?? defaults.photoURL ?? '';
+  const provider = safeData.provider ?? defaults.provider ?? 'email';
+  const role = safeData.role ?? defaults.role ?? 'renter';
+  const verified = safeData.verified ?? defaults.verified ?? false;
+
+  return {
+    uid,
+    email,
+    displayName,
+    photoURL,
+    provider,
+    role,
+    verified,
+    createdAt: toIsoString(safeData.createdAt) ?? defaults.createdAt ?? null,
+    updatedAt: toIsoString(safeData.updatedAt) ?? defaults.updatedAt ?? null,
+  };
+};
+
 /**
  * Save user profile to Firestore
  */
-const saveUserProfile = async (user: FirebaseUser, additionalData: any = {}) => {
-  if (!user) return;
-  
+const saveUserProfile = async (
+  user: FirebaseUser,
+  additionalData: Partial<UserProfile> & Record<string, unknown> = {}
+): Promise<UserProfile> => {
+  if (!user) {
+    throw new Error('User is required to save profile');
+  }
+
   const userRef = doc(db, 'users', user.uid);
   const userSnap = await getDoc(userRef);
-  
-  if (!userSnap.exists()) {
-    const { displayName, email, photoURL } = user;
-    const createdAt = serverTimestamp();
-    
-    try {
-      await setDoc(userRef, {
-        uid: user.uid,
-        displayName: displayName || email?.split('@')[0] || 'User',
-        email,
-        photoURL: photoURL || '',
-        provider: user.providerData[0]?.providerId || 'email',
-        role: 'renter', // Default role
-        verified: false,
-        createdAt,
-        updatedAt: createdAt,
-        ...additionalData
-      });
-    } catch (error) {
-      console.error('Error saving user profile:', error);
-      throw error;
+  const isNewUser = !userSnap.exists();
+
+  const fallbackProfile: Partial<UserProfile> = {
+    uid: user.uid,
+    email: user.email ?? '',
+    displayName: user.displayName ?? user.email?.split('@')[0] ?? 'User',
+    photoURL: user.photoURL ?? '',
+    provider: user.providerData[0]?.providerId ?? 'email',
+    role: 'renter',
+    verified: false,
+    createdAt: null,
+    updatedAt: null,
+  };
+
+  const sanitizedAdditionalData = Object.entries(additionalData).reduce<Record<string, unknown>>((accumulator, [key, value]) => {
+    if (value !== undefined && value !== null) {
+      accumulator[key] = value;
+    }
+    return accumulator;
+  }, {});
+
+  const payload: Record<string, unknown> = {
+    uid: user.uid,
+    email: sanitizedAdditionalData.email ?? fallbackProfile.email,
+    displayName: sanitizedAdditionalData.displayName ?? fallbackProfile.displayName,
+    photoURL: sanitizedAdditionalData.photoURL ?? fallbackProfile.photoURL,
+    provider: sanitizedAdditionalData.provider ?? fallbackProfile.provider,
+    updatedAt: serverTimestamp(),
+  };
+
+  if (isNewUser) {
+    payload.role = sanitizedAdditionalData.role ?? fallbackProfile.role;
+    payload.verified = sanitizedAdditionalData.verified ?? fallbackProfile.verified;
+    payload.createdAt = serverTimestamp();
+  } else {
+    if (sanitizedAdditionalData.role !== undefined) {
+      payload.role = sanitizedAdditionalData.role;
+    }
+    if (sanitizedAdditionalData.verified !== undefined) {
+      payload.verified = sanitizedAdditionalData.verified;
     }
   }
-  
-  return userRef;
+
+  await setDoc(userRef, payload, { merge: true });
+  const refreshedSnapshot = await getDoc(userRef);
+
+  return normalizeUserProfile(user.uid, refreshedSnapshot.data(), {
+    ...fallbackProfile,
+    ...(sanitizedAdditionalData as Partial<UserProfile>),
+  });
 };
 
 /**
@@ -94,7 +176,7 @@ const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
     const userSnap = await getDoc(userRef);
     
     if (userSnap.exists()) {
-      return userSnap.data() as UserProfile;
+      return normalizeUserProfile(uid, userSnap.data());
     }
     return null;
   } catch (error) {
@@ -140,6 +222,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       const { user } = await createUserWithEmailAndPassword(auth, email, password);
       console.log('User created successfully:', user.uid);
+      setCurrentUser(user);
       
       let photoURL = '';
       
@@ -164,16 +247,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Save to Firestore
       console.log('Saving to Firestore...');
+      let savedProfile: UserProfile | null = null;
       try {
-        await saveUserProfile(user, { 
+        savedProfile = await saveUserProfile(user, { 
           displayName, 
           photoURL,
           role 
         });
+        setUserProfile(savedProfile);
         console.log('Firestore save successful!');
       } catch (firestoreError) {
         console.warn('Firestore save failed (this is expected if Firestore is not set up):', firestoreError);
         // Don't throw error - user creation was successful even if Firestore save failed
+      }
+
+      try {
+        await logUserActivity(user.uid, 'signup', {
+          role,
+          hasProfileImage: Boolean(photoURL)
+        });
+      } catch (activityError) {
+        console.warn('AuthContext: failed to log signup activity', activityError);
       }
       
       console.log('Signup completed successfully!');
@@ -190,10 +284,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signInWithEmailAndPasswordAuth = async (email: string, password: string) => {
     try {
       const { user } = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Ensure user profile exists in Firestore
-      await saveUserProfile(user);
-      
+      setCurrentUser(user);
+
+      try {
+        const profile = await saveUserProfile(user);
+        setUserProfile(profile);
+      } catch (firestoreError) {
+        console.warn('AuthContext: failed to ensure user profile on login', firestoreError);
+      }
+
+      try {
+        await logUserActivity(user.uid, 'login');
+      } catch (activityError) {
+        console.warn('AuthContext: failed to log login activity', activityError);
+      }
+
       return user;
     } catch (error) {
       console.error('Sign in error:', error);
@@ -234,9 +339,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       
       // Save user profile to Firestore
-      await saveUserProfile(user, {
-        provider: 'google.com'
-      });
+      setCurrentUser(user);
+
+      try {
+        const profile = await saveUserProfile(user, {
+          provider: 'google.com'
+        });
+        setUserProfile(profile);
+      } catch (firestoreError) {
+        console.warn('AuthContext: failed to persist Google user profile', firestoreError);
+      }
+      
+      try {
+        await logUserActivity(user.uid, 'login', { provider: 'google' });
+      } catch (activityError) {
+        console.warn('AuthContext: failed to log Google login activity', activityError);
+      }
       
       return user;
     } catch (error: any) {
@@ -261,11 +379,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * Sign out user
    */
   const signOutUser = async () => {
+    const uid = auth.currentUser?.uid;
+
     try {
       await signOut(auth);
+      if (uid) {
+        try {
+          await logUserActivity(uid, 'logout');
+        } catch (activityError) {
+          console.warn('AuthContext: failed to log logout activity', activityError);
+        }
+      }
     } catch (error) {
       console.error('Sign out error:', error);
       throw error;
+    } finally {
+      setCurrentUser(null);
+      setUserProfile(null);
     }
   };
 
@@ -281,25 +411,73 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const refreshUserProfile = useCallback(async (): Promise<UserProfile | null> => {
+    const user = auth.currentUser;
+
+    if (!user) {
+      setCurrentUser(null);
+      setUserProfile(null);
+      return null;
+    }
+
+    setCurrentUser(user);
+
+    try {
+      const existingProfile = await getUserProfile(user.uid);
+      if (existingProfile) {
+        setUserProfile(existingProfile);
+        return existingProfile;
+      }
+
+      const createdProfile = await saveUserProfile(user);
+      setUserProfile(createdProfile);
+      return createdProfile;
+    } catch (error) {
+      console.error('Error refreshing user profile:', error);
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
+    let isMounted = true;
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!isMounted) {
+        return;
+      }
+
       setCurrentUser(user);
-      
+
       if (user) {
         try {
-          const profile = await getUserProfile(user.uid);
-          setUserProfile(profile);
+          let profile = await getUserProfile(user.uid);
+
+          if (!profile) {
+            profile = await saveUserProfile(user);
+          }
+
+          if (isMounted) {
+            setUserProfile(profile);
+          }
         } catch (error) {
           console.error('Error fetching user profile:', error);
+          if (isMounted) {
+            setUserProfile(null);
+          }
         }
       } else {
         setUserProfile(null);
       }
-      
-      setLoading(false);
+
+      if (isMounted) {
+        setLoading(false);
+      }
     });
 
-    return unsubscribe;
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const value: AuthContextType = {
@@ -310,7 +488,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signup: signUpWithEmailAndPassword,
     loginWithGoogle: signInWithGoogle,
     logout: signOutUser,
-    resetPassword: sendPasswordReset
+    resetPassword: sendPasswordReset,
+    refreshUserProfile
   };
 
   return (

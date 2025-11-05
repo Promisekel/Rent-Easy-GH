@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -32,11 +32,13 @@ import ListingImageUploader from '../components/listings/ListingImageUploader';
 import { uploadListing } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { GHANA_REGIONS } from '../utils/regions';
 
 interface ListingData {
   title: string;
   propertyType: string;
   location: string;
+  region: string;
   bedrooms: string;
   bathrooms: string;
   size: string;
@@ -71,6 +73,49 @@ const AddListingPage: React.FC = () => {
   const [selectedPropertyType, setSelectedPropertyType] = useState<string>('');
   const [isPublishing, setIsPublishing] = useState(false);
 
+  const titleRef = useRef<HTMLInputElement | null>(null);
+  const locationRef = useRef<HTMLInputElement | null>(null);
+  const monthlyRentRef = useRef<HTMLInputElement | null>(null);
+  const photosSectionRef = useRef<HTMLDivElement | null>(null);
+
+  const fieldStepMap = {
+    title: 1,
+    location: 1,
+    monthlyRent: 4,
+    photos: 3
+  } as const;
+
+  const fieldRefs = {
+    title: titleRef,
+    location: locationRef,
+    monthlyRent: monthlyRentRef,
+    photos: photosSectionRef
+  } as const;
+
+  const focusField = useCallback(
+    (field: keyof typeof fieldStepMap) => {
+      const targetStep = fieldStepMap[field];
+      const scrollToField = () => {
+        const node = fieldRefs[field].current;
+        if (!node) {
+          return;
+        }
+        node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if ('focus' in node && typeof (node as HTMLElement).focus === 'function') {
+          (node as HTMLElement).focus({ preventScroll: true });
+        }
+      };
+
+      if (currentStep !== targetStep) {
+        setCurrentStep(targetStep);
+        setTimeout(scrollToField, 320);
+      } else {
+        scrollToField();
+      }
+    },
+    [currentStep]
+  );
+
   // Check if user is authenticated
   useEffect(() => {
     if (!currentUser) {
@@ -84,6 +129,7 @@ const AddListingPage: React.FC = () => {
     title: '',
     propertyType: '',
     location: '',
+    region: '',
     bedrooms: '1',
     bathrooms: '1',
     size: '',
@@ -213,7 +259,7 @@ const AddListingPage: React.FC = () => {
       return;
     }
 
-    if (!listingData.title || !listingData.location || !listingData.monthlyRent) {
+    if (!listingData.title || !listingData.location || !listingData.region || !listingData.monthlyRent) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -225,6 +271,7 @@ const AddListingPage: React.FC = () => {
         title: listingData.title,
         price: parseFloat(listingData.monthlyRent),
         location: listingData.location,
+        region: listingData.region,
         description: listingData.description,
         amenities: selectedFeatures,
         photos: listingImages.map(img => img.url),
@@ -235,11 +282,11 @@ const AddListingPage: React.FC = () => {
         bedrooms: parseInt(listingData.bedrooms),
         bathrooms: parseInt(listingData.bathrooms),
         size: parseFloat(listingData.size) || 0,
-        coverPhoto: coverImageUrl,
-        contactName: listingData.contactName,
-        phoneNumber: listingData.phoneNumber,
-        emailAddress: listingData.emailAddress,
-        securityDeposit: parseFloat(listingData.securityDeposit) || 0,
+  coverPhoto: coverImageUrl ?? undefined,
+  contactName: listingData.contactName,
+  contactPhone: listingData.phoneNumber,
+  contactEmail: listingData.emailAddress,
+  securityDeposit: parseFloat(listingData.securityDeposit) || 0,
         additionalFeatures: listingData.additionalFeatures,
         createdAt: new Date().toISOString(),
         available: true,
@@ -255,6 +302,7 @@ const AddListingPage: React.FC = () => {
         title: '',
         propertyType: '',
         location: '',
+        region: '',
         bedrooms: '1',
         bathrooms: '1',
         size: '',
@@ -329,7 +377,7 @@ const AddListingPage: React.FC = () => {
         <p className="text-gray-600 max-w-2xl mx-auto">Let's start with the basic information about your property</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <motion.div variants={itemVariants}>
           <label className="block text-sm font-medium text-gray-700 mb-2">Property Title *</label>
           <input
@@ -338,6 +386,7 @@ const AddListingPage: React.FC = () => {
             onChange={(e) => updateListingData('title', e.target.value)}
             placeholder="e.g., Modern 2-Bedroom Apartment in East Legon"
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+            ref={titleRef}
           />
         </motion.div>
 
@@ -362,7 +411,7 @@ const AddListingPage: React.FC = () => {
           </div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="lg:col-span-2">
+  <motion.div variants={itemVariants} className="lg:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <MapPin className="w-4 h-4 inline mr-2" />
             Location *
@@ -373,7 +422,22 @@ const AddListingPage: React.FC = () => {
             onChange={(e) => updateListingData('location', e.target.value)}
             placeholder="Enter full address (e.g., East Legon, Accra)"
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+            ref={locationRef}
           />
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Region *</label>
+          <select
+            value={listingData.region}
+            onChange={(event) => updateListingData('region', event.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white"
+          >
+            <option value="">Select a region</option>
+            {GHANA_REGIONS.map(region => (
+              <option key={region} value={region}>{region}</option>
+            ))}
+          </select>
         </motion.div>
 
         <motion.div variants={itemVariants} className="grid grid-cols-3 gap-4">
@@ -486,7 +550,7 @@ const AddListingPage: React.FC = () => {
         <p className="text-gray-600 max-w-2xl mx-auto">Upload high-quality photos to showcase your property</p>
       </div>
 
-      <motion.div variants={itemVariants}>
+      <motion.div variants={itemVariants} ref={photosSectionRef}>
         <ListingImageUploader
           onImagesChange={handleImagesChange}
           onCoverImageChange={handleCoverImageChange}
@@ -647,6 +711,7 @@ const AddListingPage: React.FC = () => {
             onChange={(e) => updateListingData('monthlyRent', e.target.value)}
             placeholder="1500"
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+            ref={monthlyRentRef}
           />
         </motion.div>
 
@@ -741,27 +806,55 @@ const AddListingPage: React.FC = () => {
         {/* Validation warnings */}
         <div className="mt-6 space-y-2">
           {!listingData.title && (
-            <p className="text-red-600 text-sm flex items-center">
-              <X className="w-4 h-4 mr-2" />
-              Property title is required
+            <p className="text-red-600 text-sm flex items-center space-x-2">
+              <X className="w-4 h-4" />
+              <span>Property title is required</span>
+              <button
+                type="button"
+                onClick={() => focusField('title')}
+                className="text-blue-600 hover:text-blue-700 underline"
+              >
+                Go to field
+              </button>
             </p>
           )}
           {!listingData.location && (
-            <p className="text-red-600 text-sm flex items-center">
-              <X className="w-4 h-4 mr-2" />
-              Location is required
+            <p className="text-red-600 text-sm flex items-center space-x-2">
+              <X className="w-4 h-4" />
+              <span>Location is required</span>
+              <button
+                type="button"
+                onClick={() => focusField('location')}
+                className="text-blue-600 hover:text-blue-700 underline"
+              >
+                Go to field
+              </button>
             </p>
           )}
           {!listingData.monthlyRent && (
-            <p className="text-red-600 text-sm flex items-center">
-              <X className="w-4 h-4 mr-2" />
-              Monthly rent is required
+            <p className="text-red-600 text-sm flex items-center space-x-2">
+              <X className="w-4 h-4" />
+              <span>Monthly rent is required</span>
+              <button
+                type="button"
+                onClick={() => focusField('monthlyRent')}
+                className="text-blue-600 hover:text-blue-700 underline"
+              >
+                Go to field
+              </button>
             </p>
           )}
           {listingImages.length === 0 && (
-            <p className="text-red-600 text-sm flex items-center">
-              <X className="w-4 h-4 mr-2" />
-              At least one photo is required
+            <p className="text-red-600 text-sm flex items-center space-x-2">
+              <X className="w-4 h-4" />
+              <span>At least one photo is required</span>
+              <button
+                type="button"
+                onClick={() => focusField('photos')}
+                className="text-blue-600 hover:text-blue-700 underline"
+              >
+                Go to section
+              </button>
             </p>
           )}
           {listingData.title && listingData.location && listingData.monthlyRent && listingImages.length > 0 && (

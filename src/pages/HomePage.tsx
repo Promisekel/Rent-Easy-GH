@@ -1,10 +1,25 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Shield, Star, Heart, ArrowRight, Home, Users, CheckCircle, Bed, Bath, Eye } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchValue, setSearchValue] = useState('');
+  const handleSearch = useCallback((event?: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>) => {
+    if (event) {
+      event.preventDefault();
+    }
+
+    const trimmed = searchValue.trim();
+    if (!trimmed) {
+      toast.error('Enter a location or keyword to start searching.');
+      return;
+    }
+
+    navigate(`/browse?search=${encodeURIComponent(trimmed)}`);
+  }, [navigate, searchValue]);
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -159,7 +174,8 @@ const HomePage: React.FC = () => {
             </motion.p>
 
             {/* Search Bar */}
-            <motion.div 
+            <motion.form
+              onSubmit={handleSearch}
               variants={itemVariants}
               className="glass-effect rounded-2xl p-2 max-w-2xl mx-auto mb-12"
             >
@@ -168,13 +184,17 @@ const HomePage: React.FC = () => {
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input 
-                      type="text" 
+                      type="text"
+                      value={searchValue}
+                      onChange={event => setSearchValue(event.target.value)}
                       placeholder="Where do you want to live?"
                       className="w-full pl-12 pr-4 py-4 rounded-xl border-0 focus:ring-0 bg-white/50 backdrop-blur text-lg placeholder-gray-500"
                     />
                   </div>
                 </div>
                 <motion.button 
+                  type="submit"
+                  onClick={handleSearch}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="btn-primary w-full md:w-auto px-8 py-4 text-lg rounded-xl group"
@@ -183,7 +203,7 @@ const HomePage: React.FC = () => {
                   Search
                 </motion.button>
               </div>
-            </motion.div>
+            </motion.form>
 
             {/* Action Buttons */}
             <motion.div 

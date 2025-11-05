@@ -7,9 +7,10 @@ import toast from 'react-hot-toast';
 
 interface UserProfileProps {
   onLogout?: () => void;
+  onClose?: () => void;
 }
 
-const UserProfile: React.FC<UserProfileProps> = ({ onLogout }) => {
+const UserProfile: React.FC<UserProfileProps> = ({ onLogout, onClose }) => {
   const { currentUser, userProfile, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -22,6 +23,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ onLogout }) => {
       console.error('Logout error:', error);
       toast.error('Failed to logout');
     }
+  };
+
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    onClose?.();
   };
 
   if (!currentUser) return null;
@@ -59,6 +65,18 @@ const UserProfile: React.FC<UserProfileProps> = ({ onLogout }) => {
       className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 px-4 py-8"
     >
       <div className="max-w-2xl mx-auto">
+        <div className="flex justify-start mb-4">
+          <motion.button
+            whileHover={{ x: -2 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onClose}
+            className="inline-flex items-center space-x-2 text-primary-600 hover:text-primary-700 font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to site</span>
+          </motion.button>
+        </div>
+
         {/* Header */}
         <motion.div 
           variants={itemVariants}
@@ -175,7 +193,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onLogout }) => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/')}
+                onClick={() => handleNavigate('/')}
                 className="bg-gradient-to-r from-primary-500 to-primary-600 text-white py-3 px-4 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
               >
                 <Home className="w-4 h-4 mr-1" />
@@ -185,7 +203,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onLogout }) => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/my-dashboard')}
+                onClick={() => handleNavigate('/dashboard')}
                 className="bg-gradient-to-r from-secondary-500 to-secondary-600 text-white py-3 px-4 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
               >
                 <User className="w-4 h-4 mr-1" />
@@ -197,6 +215,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onLogout }) => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={() => handleNavigate('/add-listing')}
                 className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-6 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 🏘️ Manage Properties
@@ -207,7 +226,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onLogout }) => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/')}
+                onClick={() => handleNavigate('/browse')}
                 className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-6 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 🏠 Browse Properties

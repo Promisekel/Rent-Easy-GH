@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Search, 
   Filter, 
@@ -27,6 +27,11 @@ import {
   Check
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import useListings from '../hooks/useListings';
+import { getUserById } from '../services/firebase';
+import { User } from '../types/User';
+import { getUserAvatarFallback, getUserRoleLabel } from '../utils/user';
+import { formatRegionLabel, GHANA_REGIONS } from '../utils/regions';
 
 interface Property {
   id: string;
@@ -42,167 +47,27 @@ interface Property {
   type: 'apartment' | 'house' | 'studio' | 'condo';
   featured: boolean;
   amenities: string[];
+  region?: string;
   landlord: {
     name: string;
     verified: boolean;
     avatar: string;
+    role: User['role'];
+    roleLabel: string;
   };
   availableFrom: string;
 }
 
-// Mock data for demonstration
-const mockProperties: Property[] = [
-  {
-    id: '1',
-    title: 'Modern 2-Bedroom Apartment in East Legon',
-    location: 'East Legon, Accra',
-    price: 1200,
-    bedrooms: 2,
-    bathrooms: 2,
-    area: 85,
-    images: [
-      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800',
-      'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800',
-    ],
-    rating: 4.8,
-    reviews: 24,
-    type: 'apartment',
-    featured: true,
-    amenities: ['WiFi', 'Parking', 'Security', 'Pool'],
-    landlord: {
-      name: 'Sarah Johnson',
-      verified: true,
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b4d6?w=100'
-    },
-    availableFrom: '2025-09-01'
-  },
-  {
-    id: '2',
-    title: 'Luxury 3-Bedroom House with Garden',
-    location: 'Airport Residential, Accra',
-    price: 2500,
-    bedrooms: 3,
-    bathrooms: 3,
-    area: 150,
-    images: [
-      'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800',
-      'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800',
-    ],
-    rating: 4.9,
-    reviews: 18,
-    type: 'house',
-    featured: true,
-    amenities: ['WiFi', 'Parking', 'Security', 'Garden', 'Gym'],
-    landlord: {
-      name: 'Michael Chen',
-      verified: true,
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100'
-    },
-    availableFrom: '2025-08-15'
-  },
-  {
-    id: '3',
-    title: 'Cozy Studio in Osu',
-    location: 'Osu, Accra',
-    price: 600,
-    bedrooms: 1,
-    bathrooms: 1,
-    area: 35,
-    images: [
-      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800',
-      'https://images.unsplash.com/photo-1567767292278-a4f21aa2d36e?w=800',
-    ],
-    rating: 4.6,
-    reviews: 12,
-    type: 'studio',
-    featured: false,
-    amenities: ['WiFi', 'Security'],
-    landlord: {
-      name: 'Ama Asante',
-      verified: true,
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100'
-    },
-    availableFrom: '2025-08-20'
-  },
-  {
-    id: '4',
-    title: 'Executive 4-Bedroom Villa',
-    location: 'Cantonments, Accra',
-    price: 3500,
-    bedrooms: 4,
-    bathrooms: 4,
-    area: 200,
-    images: [
-      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800',
-      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800',
-    ],
-    rating: 5.0,
-    reviews: 8,
-    type: 'house',
-    featured: true,
-    amenities: ['WiFi', 'Parking', 'Security', 'Pool', 'Garden', 'Gym', 'Staff Quarters'],
-    landlord: {
-      name: 'Robert Wilson',
-      verified: true,
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100'
-    },
-    availableFrom: '2025-09-15'
-  },
-  {
-    id: '5',
-    title: 'Modern 1-Bedroom Apartment',
-    location: 'Labone, Accra',
-    price: 800,
-    bedrooms: 1,
-    bathrooms: 1,
-    area: 50,
-    images: [
-      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800',
-      'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=800',
-    ],
-    rating: 4.7,
-    reviews: 15,
-    type: 'apartment',
-    featured: false,
-    amenities: ['WiFi', 'Parking', 'Security'],
-    landlord: {
-      name: 'Grace Mensah',
-      verified: true,
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100'
-    },
-    availableFrom: '2025-08-25'
-  },
-  {
-    id: '6',
-    title: 'Spacious 2-Bedroom Condo',
-    location: 'Tema, Greater Accra',
-    price: 950,
-    bedrooms: 2,
-    bathrooms: 2,
-    area: 75,
-    images: [
-      'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800',
-      'https://images.unsplash.com/photo-1560448075-bb485b067938?w=800',
-    ],
-    rating: 4.5,
-    reviews: 22,
-    type: 'condo',
-    featured: false,
-    amenities: ['WiFi', 'Parking', 'Security', 'Pool'],
-    landlord: {
-      name: 'David Osei',
-      verified: true,
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100'
-    },
-    availableFrom: '2025-09-01'
-  }
-];
+const DEFAULT_PROPERTY_IMAGE = 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=800&auto=format&fit=crop&q=80';
 
 const BrowseListingsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [properties, setProperties] = useState<Property[]>(mockProperties);
-  const [filteredProperties, setFilteredProperties] = useState<Property[]>(mockProperties);
+  const location = useLocation();
+  const { listings, loading, error, fetchListings } = useListings();
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
   const [bedroomFilter, setBedroomFilter] = useState<string>('all');
@@ -210,16 +75,178 @@ const BrowseListingsPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>('featured');
+  const [landlordProfiles, setLandlordProfiles] = useState<Record<string, User>>({});
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const queryParam = params.get('search') ?? params.get('q') ?? params.get('location');
+    const regionParam = params.get('region');
+
+    if (queryParam !== null && queryParam !== searchTerm) {
+      setSearchTerm(queryParam);
+    }
+
+    if (!regionParam) {
+      if (selectedRegion !== 'all') {
+        setSelectedRegion('all');
+      }
+      return;
+    }
+
+    const normalizedRegion = formatRegionLabel(regionParam);
+    if (normalizedRegion === 'Unspecified') {
+      if (selectedRegion !== 'all') {
+        setSelectedRegion('all');
+      }
+      return;
+    }
+
+    if (normalizedRegion !== selectedRegion) {
+      setSelectedRegion(normalizedRegion);
+    }
+  }, [location.search, searchTerm, selectedRegion]);
+
+
+  const normalizeType = (input?: string): Property['type'] => {
+    if (!input) {
+      return 'apartment';
+    }
+    const value = input.toLowerCase();
+    if (value.includes('house') || value.includes('villa')) {
+      return 'house';
+    }
+    if (value.includes('studio')) {
+      return 'studio';
+    }
+    if (value.includes('condo')) {
+      return 'condo';
+    }
+    return 'apartment';
+  };
+
+  useEffect(() => {
+    const uniqueIds = Array.from(
+      new Set(
+        listings
+          .map(listing => listing.userId || listing.landlordId)
+          .filter((value): value is string => Boolean(value))
+      )
+    );
+
+    const missingIds = uniqueIds.filter(id => !landlordProfiles[id]);
+    if (missingIds.length === 0) {
+      return;
+    }
+
+    let isCancelled = false;
+    Promise.all(
+      missingIds.map(async id => {
+        try {
+          const user = await getUserById(id);
+          return { id, user } as { id: string; user: User | null };
+        } catch (error) {
+          console.warn('Failed to fetch landlord profile for id', id, error);
+          return { id, user: null } as { id: string; user: User | null };
+        }
+      })
+    ).then(results => {
+      if (isCancelled) {
+        return;
+      }
+      setLandlordProfiles(prev => {
+        const next = { ...prev };
+        results.forEach(({ id, user }) => {
+          if (user) {
+            next[id] = user;
+          }
+        });
+        return next;
+      });
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [listings, landlordProfiles]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error('Unable to load listings. Please refresh or try again.');
+      setProperties([]);
+      return;
+    }
+
+    if (loading) {
+      return;
+    }
+
+    if (listings.length === 0) {
+      setProperties([]);
+      return;
+    }
+
+    const mapped: Property[] = listings.map(listing => {
+      const cover = listing.coverPhoto || listing.photos?.[0] || DEFAULT_PROPERTY_IMAGE;
+      const images = listing.photos && listing.photos.length > 0
+        ? listing.photos
+        : [cover];
+
+      let ownerProfile: User | undefined;
+      if (listing.userId && landlordProfiles[listing.userId]) {
+        ownerProfile = landlordProfiles[listing.userId];
+      } else if (listing.landlordId && landlordProfiles[listing.landlordId]) {
+        ownerProfile = landlordProfiles[listing.landlordId];
+      }
+
+      const ownerName = ownerProfile?.name ?? listing.contactName ?? 'Listing Owner';
+      const ownerRole: User['role'] = ownerProfile?.role ?? 'landlord';
+      const ownerRoleLabel = getUserRoleLabel(ownerProfile?.role);
+      const ownerAvatar = ownerProfile?.photoURL ?? getUserAvatarFallback(ownerRole, ownerName);
+
+      return {
+        id: listing.id ?? `temp-${Math.random().toString(36).slice(2, 10)}`,
+        title: listing.title || 'Untitled property',
+        location: listing.location || 'Location unavailable',
+        price: listing.price ?? 0,
+        bedrooms: listing.bedrooms ?? 0,
+        bathrooms: listing.bathrooms ?? 0,
+        area: listing.size ?? 0,
+        images,
+        rating: listing.verified ? 4.8 : 4.5,
+        reviews: listing.reportedCount ?? 0,
+        type: normalizeType(listing.propertyType ?? listing.type),
+        featured: listing.featured ?? false,
+        amenities: listing.amenities ?? [],
+        region: listing.region ? formatRegionLabel(listing.region) : undefined,
+        landlord: {
+          name: ownerName,
+          verified: listing.verified ?? ownerProfile?.verified ?? false,
+          avatar: ownerAvatar,
+          role: ownerRole,
+          roleLabel: ownerRoleLabel,
+        },
+        availableFrom: listing.availabilityDate || listing.createdAt || new Date().toISOString(),
+      } as Property;
+    });
+
+    setProperties(mapped);
+  }, [listings, loading, error, landlordProfiles]);
 
   // Filter effects
   useEffect(() => {
-    let filtered = properties;
+    let filtered = [...properties];
 
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(property =>
         property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         property.location.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (selectedRegion !== 'all') {
+      filtered = filtered.filter(property =>
+        property.region &&
+        property.region.toLowerCase() === selectedRegion.toLowerCase()
       );
     }
 
@@ -258,7 +285,7 @@ const BrowseListingsPage: React.FC = () => {
     }
 
     setFilteredProperties(filtered);
-  }, [searchTerm, selectedType, priceRange, bedroomFilter, sortBy, properties]);
+  }, [searchTerm, selectedRegion, selectedType, priceRange, bedroomFilter, sortBy, properties]);
 
   const toggleFavorite = (propertyId: string) => {
     setFavoriteIds(prev =>
@@ -270,6 +297,28 @@ const BrowseListingsPage: React.FC = () => {
       favoriteIds.includes(propertyId) ? 'Removed from favorites' : 'Added to favorites',
       { icon: favoriteIds.includes(propertyId) ? '💔' : '❤️' }
     );
+  };
+
+  const updateRegionInUrl = (regionValue: string) => {
+    const params = new URLSearchParams(location.search);
+    if (regionValue === 'all') {
+      params.delete('region');
+    } else {
+      params.set('region', regionValue);
+    }
+    const queryString = params.toString();
+    navigate({ pathname: location.pathname, search: queryString ? `?${queryString}` : '' }, { replace: true });
+  };
+
+  const handleRegionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value;
+    setSelectedRegion(value);
+    updateRegionInUrl(value);
+  };
+
+  const clearRegionFilter = () => {
+    setSelectedRegion('all');
+    updateRegionInUrl('all');
   };
 
   const containerVariants = {
@@ -359,7 +408,7 @@ const BrowseListingsPage: React.FC = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.8 }}
               >
-                Explore {filteredProperties.length} amazing properties in Ghana
+                Explore {filteredProperties.length} amazing properties {selectedRegion !== 'all' ? `in ${selectedRegion}` : 'across Ghana'}
               </motion.p>
 
               {/* Search and Filter Bar */}
@@ -390,6 +439,26 @@ const BrowseListingsPage: React.FC = () => {
                   Filters
                 </motion.button>
               </motion.div>
+
+              {selectedRegion !== 'all' && (
+                <motion.div
+                  className="mt-4 flex flex-wrap items-center gap-3"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                >
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 border border-white/20 backdrop-blur-md text-sm text-white/90">
+                    <MapPin className="w-4 h-4" />
+                    {selectedRegion}
+                  </span>
+                  <button
+                    onClick={clearRegionFilter}
+                    className="text-sm text-white/80 hover:text-white underline underline-offset-4 decoration-white/40"
+                  >
+                    Clear region filter
+                  </button>
+                </motion.div>
+              )}
             </div>
 
             {/* Decorative elements */}
@@ -408,7 +477,24 @@ const BrowseListingsPage: React.FC = () => {
                 className="mb-8 overflow-hidden"
               >
                 <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                    {/* Region */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">Region</label>
+                      <select
+                        value={selectedRegion}
+                        onChange={handleRegionChange}
+                        className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="all">All Regions</option>
+                        {GHANA_REGIONS.map(region => (
+                          <option key={region} value={region}>
+                            {region}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     {/* Property Type */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-3">Property Type</label>
@@ -478,6 +564,30 @@ const BrowseListingsPage: React.FC = () => {
             )}
           </AnimatePresence>
 
+          {error && (
+            <motion.div
+              variants={itemVariants}
+              className="mb-8 rounded-2xl border border-red-100 bg-red-50 px-6 py-5 text-red-700"
+            >
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">We couldn&apos;t load the latest listings.</h3>
+                  <p className="text-sm text-red-600/80">
+                    Please refresh the page or tap retry once you&apos;re back online.
+                  </p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => fetchListings()}
+                  className="self-start rounded-xl bg-red-600 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700"
+                >
+                  Retry loading listings
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+
           {/* View Toggle and Results Count */}
           <motion.div 
             variants={itemVariants}
@@ -541,6 +651,7 @@ const BrowseListingsPage: React.FC = () => {
                     setSelectedType('all');
                     setPriceRange([0, 5000]);
                     setBedroomFilter('all');
+                    clearRegionFilter();
                   }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -689,6 +800,7 @@ const BrowseListingsPage: React.FC = () => {
                                 <Check className="w-3 h-3 text-green-500 ml-1" />
                               )}
                             </div>
+                            <span className="block text-xs font-medium text-blue-600">{property.landlord.roleLabel}</span>
                             <span className="text-xs text-gray-500">Available from {new Date(property.availableFrom).toLocaleDateString()}</span>
                           </div>
                         </div>

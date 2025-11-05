@@ -6,10 +6,20 @@ const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET 
  * Direct upload to Cloudinary with progress tracking
  * Uses XMLHttpRequest for real progress monitoring
  */
+export interface CloudinaryUploadResult {
+  url: string;
+  publicId?: string;
+  width?: number;
+  height?: number;
+  format?: string;
+  bytes?: number;
+  createdAt?: string;
+}
+
 export const directUploadToCloudinary = async (
-  file: File, 
+  file: File,
   onProgress?: (progress: number) => void
-) => {
+): Promise<CloudinaryUploadResult> => {
   if (!file) throw new Error('No file provided');
   
   // Validate file
@@ -24,10 +34,11 @@ export const directUploadToCloudinary = async (
     throw new Error('File too large. Please select an image under 5MB.');
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise<CloudinaryUploadResult>((resolve, reject) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    formData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
     formData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
 
     const xhr = new XMLHttpRequest();
@@ -77,6 +88,9 @@ export const directUploadToCloudinary = async (
     console.log('Cloud name:', CLOUDINARY_CLOUD_NAME);
     console.log('Upload preset:', CLOUDINARY_UPLOAD_PRESET);
     console.log('File:', file.name, file.size, 'bytes');
+    console.log('Environment check:');
+    console.log('- REACT_APP_CLOUDINARY_CLOUD_NAME:', process.env.REACT_APP_CLOUDINARY_CLOUD_NAME);
+    console.log('- REACT_APP_CLOUDINARY_UPLOAD_PRESET:', process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET);
 
     xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`);
     xhr.send(formData);

@@ -3,10 +3,11 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import HomePage from './pages/HomePage';
 import BrowseListingsPage from './pages/BrowseListingsPage';
+import LocationsPage from './pages/LocationsPage';
 import ListingDetailsPage from './pages/ListingDetailsPage';
 import AddListingPage from './pages/AddListingPage';
 import DashboardPage from './pages/DashboardPage';
-import Dashboard from './pages/Dashboard';
+import EditListingPage from './pages/EditListingPage';
 import AuthPage from './pages/AuthPage';
 import ContactPage from './pages/ContactPage';
 import Header from './components/common/Header';
@@ -58,7 +59,10 @@ const AppContent: React.FC = () => {
 
       {/* Show user profile if logged in and auth was requested */}
       {showAuth && currentUser && (
-        <UserProfile onLogout={handleLogout} />
+        <UserProfile
+          onLogout={handleLogout}
+          onClose={() => setShowAuth(false)}
+        />
       )}
 
       {/* Show main app */}
@@ -72,8 +76,10 @@ const AppContent: React.FC = () => {
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/listing/:id" element={<ListingDetailsPage />} />
               <Route path="/add-listing" element={<AddListingPage />} />
+              <Route path="/locations" element={<LocationsPage />} />
+              <Route path="/manage-listing/:id" element={<EditListingPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/my-dashboard" element={<Dashboard />} />
+              <Route path="/my-dashboard" element={<DashboardPage />} />
               <Route path="/contact" element={<ContactPage />} />
             </Routes>
           </main>

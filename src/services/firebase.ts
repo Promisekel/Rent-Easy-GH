@@ -1,239 +1,292 @@
-import { User } from '../types/User';
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  serverTimestamp,
+  query,
+  orderBy,
+  DocumentData,
+  QueryDocumentSnapshot,
+} from 'firebase/firestore';
+import { db } from '../config/firebase';
 import { Listing } from '../types/Listing';
+import { User } from '../types/User';
 
-// Mock Firebase service for development
-let mockUser: User | null = null;
+const LISTINGS_COLLECTION = 'listings';
+const USERS_COLLECTION = 'users';
 
-// Mock listings data with correct properties
-let mockListings: Listing[] = [
-  {
-    id: '1',
-    title: 'Modern 2BR Apartment in East Legon',
-    description: 'Beautiful modern apartment with all amenities in prime location.',
-    price: 1500,
-    rentAdvance: 3000,
-    bedrooms: 2,
-    bathrooms: 2,
-    size: 75,
-    type: 'apartment',
-    buildingType: 'Apartment',
-    location: 'East Legon, Accra',
-    photos: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop'],
-    userId: 'user1',
-    landlordId: 'user1',
-    verified: true,
-    featured: true,
-    premium: false,
-    amenities: ['WiFi', 'AC', 'Parking', 'Security'],
-    available: true,
-    createdAt: new Date().toISOString(),
-    reportedCount: 0,
-    landmark: 'Near A&C Mall',
-    securityLevel: 'High' as const,
-    securityFeatures: ['24/7 Security', 'CCTV', 'Access Control'],
-    electricityType: 'Prepaid' as const,
-    electricityRange: '50-100 GHS/month',
-    waterAvailability: 'Regular' as const,
-    noiseLevel: 'Quiet' as const,
-    roadCondition: 'Tiled' as const,
-    category: 'Residential',
-    geoPoint: { lat: 5.6037, lng: -0.1870 },
-    directionsEnabled: true,
+const toIsoString = (value: unknown): string | null => {
+  if (!value) {
+    return null;
   }
-];
 
-// Mock Auth Service
-export const auth = {
-  currentUser: mockUser,
-  signInWithEmailAndPassword: async (email: string, password: string): Promise<{ user: User }> => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    if (email === 'test@example.com' && password === 'password') {
-      const user: User = {
-        id: 'user1',
-        email,
-        name: 'Test User',
-        role: 'renter',
-        verified: true,
-        favorites: [],
-        createdAt: new Date(),
-      };
-      mockUser = user;
-      return { user };
-    }
-    
-    throw new Error('Invalid credentials');
-  },
-  
-  createUserWithEmailAndPassword: async (email: string, password: string): Promise<{ user: User }> => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const user: User = {
-      id: `user_${Date.now()}`,
-      email,
-      name: email.split('@')[0],
-      role: 'renter',
-      verified: false,
-      favorites: [],
-      createdAt: new Date(),
-    };
-    
-    mockUser = user;
-    return { user };
-  },
-  
-  signOut: async (): Promise<void> => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    mockUser = null;
-  },
-  
-  onAuthStateChanged: (callback: (user: User | null) => void) => {
-    // Simulate auth state change
-    setTimeout(() => callback(mockUser), 100);
-    
-    // Return unsubscribe function
-    return () => {};
+  if (typeof value === 'string') {
+    return value;
   }
-};
 
-// Mock Firestore Service
-export const firestore = {
-  collection: (name: string) => ({
-    add: async (data: any) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return { id: `${name}_${Date.now()}` };
-    },
-    
-    get: async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      if (name === 'listings') {
-        return {
-          docs: mockListings.map(listing => ({
-            id: listing.id,
-            data: () => listing
-          }))
-        };
-      }
-      
-      return { docs: [] };
-    },
-    
-    doc: (id: string) => ({
-      get: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        if (name === 'listings') {
-          const listing = mockListings.find(l => l.id === id);
-          return {
-            exists: !!listing,
-            data: () => listing
-          };
-        }
-        
-        return { exists: false };
-      },
-      
-      update: async (data: any) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        if (name === 'listings') {
-          const index = mockListings.findIndex(l => l.id === id);
-          if (index !== -1) {
-            mockListings[index] = { ...mockListings[index], ...data };
-          }
-        }
-      },
-      
-      delete: async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        if (name === 'listings') {
-          const index = mockListings.findIndex(l => l.id === id);
-          if (index !== -1) {
-            mockListings.splice(index, 1);
-          }
-        }
-      }
-    })
-  })
-};
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
 
-// Mock Storage Service
-export const storage = {
-  ref: (path: string) => ({
-    put: async (file: File) => {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return {
-        ref: {
-          getDownloadURL: async () => {
-            return `/api/placeholder/400/300?filename=${file.name}`;
-          }
-        }
-      };
+  if (typeof value === 'object' && value !== null && 'toDate' in (value as Record<string, unknown>)) {
+    try {
+      const date = (value as { toDate: () => Date }).toDate();
+      return date.toISOString();
+    } catch (error) {
+      console.warn('Failed to convert Firestore timestamp to ISO string', error);
     }
-  })
+  }
+
+  return null;
 };
 
-// Service functions
-export const getAllListings = async (): Promise<Listing[]> => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return mockListings;
-};
-
-export const getAllUsers = async (): Promise<User[]> => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  const mockUsers: User[] = [
-    {
-      id: 'user1',
-      name: 'John Landlord',
-      email: 'john@example.com',
-      role: 'landlord',
-      verified: true,
-      favorites: [],
-      createdAt: new Date()
-    },
-    {
-      id: 'user2', 
-      name: 'Jane Renter',
-      email: 'jane@example.com',
-      role: 'renter',
-      verified: false,
-      favorites: ['1'],
-      createdAt: new Date()
+const cleanObject = (input: Record<string, unknown>): Record<string, any> => {
+  return Object.entries(input).reduce<Record<string, any>>((accumulator, [key, value]) => {
+    if (value === undefined || value === null) {
+      return accumulator;
     }
-  ];
-  return mockUsers;
+
+    if (Array.isArray(value)) {
+      accumulator[key] = value.filter(item => item !== undefined && item !== null);
+      return accumulator;
+    }
+
+    if (typeof value === 'object' && !(value instanceof Date)) {
+  const nested = cleanObject(value as Record<string, unknown>);
+      if (Object.keys(nested).length > 0) {
+        accumulator[key] = nested;
+      }
+      return accumulator;
+    }
+
+    accumulator[key] = value;
+    return accumulator;
+  }, {});
 };
 
-export const uploadListing = async (listingData: Omit<Listing, 'id' | 'createdAt'>): Promise<string> => {
-  const newListing: Listing = {
-    ...listingData,
-    id: `listing_${Date.now()}`,
-    createdAt: new Date().toISOString()
+const mapListingDoc = (snapshot: QueryDocumentSnapshot<DocumentData>): Listing => {
+  const data = snapshot.data() || {};
+  const contact = data.contact || {};
+
+  const geoPoint = data.geoPoint;
+  const transformedGeoPoint = geoPoint && typeof geoPoint.latitude === 'number' && typeof geoPoint.longitude === 'number'
+    ? { lat: geoPoint.latitude, lng: geoPoint.longitude }
+    : undefined;
+
+  return {
+    id: snapshot.id,
+    title: data.title ?? '',
+    description: data.description ?? '',
+    price: data.price ?? 0,
+    rentAdvance: data.rentAdvance ?? data.rentAdvanceMonths,
+    rentAdvanceMonths: data.rentAdvanceMonths ?? data.rentAdvance,
+    bedrooms: data.bedrooms,
+    bathrooms: data.bathrooms,
+    size: data.size ?? data.sizeSqm,
+    type: data.type,
+    propertyType: data.propertyType ?? data.type,
+    buildingType: data.buildingType,
+    location: data.location ?? '',
+    region: data.region,
+    photos: data.photos ?? [],
+    userId: data.userId,
+    landlordId: data.landlordId,
+    verified: data.verified ?? false,
+    featured: data.featured ?? false,
+    premium: data.premium ?? false,
+    amenities: data.amenities ?? [],
+    available: data.available ?? true,
+    availabilityDate: data.availabilityDate,
+    contactName: data.contactName ?? contact.name ?? undefined,
+    contactPhone: data.contactPhone ?? contact.phone ?? undefined,
+    contactEmail: data.contactEmail ?? contact.email ?? undefined,
+    contactWhatsApp: data.contactWhatsApp ?? contact.whatsapp ?? undefined,
+    coverPhoto: data.coverPhoto,
+    securityDeposit: data.securityDeposit,
+    additionalFeatures: data.additionalFeatures,
+    status: data.status ?? 'pending',
+    createdAt: toIsoString(data.createdAt),
+    updatedAt: toIsoString(data.updatedAt),
+    reportedCount: data.reportedCount ?? 0,
+    landmark: data.landmark,
+    securityLevel: data.securityLevel,
+    securityFeatures: data.securityFeatures,
+    electricityType: data.electricityType,
+    electricityRange: data.electricityRange,
+    waterAvailability: data.waterAvailability,
+    noiseLevel: data.noiseLevel,
+    roadCondition: data.roadCondition,
+    category: data.category,
+    geoPoint: transformedGeoPoint,
+    directionsEnabled: data.directionsEnabled,
+    advancePaymentNumber: data.advancePaymentNumber,
   };
-  mockListings.push(newListing);
-  console.log('New listing added:', newListing.title);
-  console.log('Total listings:', mockListings.length);
-  return newListing.id!;
+};
+
+const mapUserDoc = (snapshot: QueryDocumentSnapshot<DocumentData>): User => {
+  const data = snapshot.data() || {};
+
+  return {
+    id: snapshot.id,
+    name: data.displayName ?? data.name ?? '',
+    email: data.email ?? '',
+    role: data.role ?? 'renter',
+    verified: data.verified ?? false,
+    favorites: data.favorites ?? [],
+    photoURL: data.photoURL,
+    phone: data.phone ?? data.contactPhone,
+    status: data.status ?? 'active',
+    createdAt: toIsoString(data.createdAt),
+    updatedAt: toIsoString(data.updatedAt),
+  };
+};
+
+const fallbackOrderQuery = async (collectionName: string): Promise<QueryDocumentSnapshot<DocumentData>[]> => {
+  const snapshot = await getDocs(collection(db, collectionName));
+  return snapshot.docs;
 };
 
 export const getListings = async (): Promise<Listing[]> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return [...mockListings]; // Return a copy of the listings
-};
-
-export const approveVerification = async (listingId: string): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  const listing = mockListings.find(l => l.id === listingId);
-  if (listing) {
-    listing.verified = true;
+  try {
+    const listingsRef = collection(db, LISTINGS_COLLECTION);
+    const listingsQuery = query(listingsRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(listingsQuery);
+    return snapshot.docs.map(mapListingDoc);
+  } catch (error) {
+    console.warn('Falling back to unordered listings fetch', error);
+    const docs = await fallbackOrderQuery(LISTINGS_COLLECTION);
+    return docs.map(mapListingDoc);
   }
 };
 
+export const getAllListings = async (): Promise<Listing[]> => {
+  return getListings();
+};
+
+export const uploadListing = async (
+  listingData: Omit<Listing, 'id' | 'createdAt' | 'updatedAt'> & Record<string, unknown>
+): Promise<string> => {
+  const {
+    id,
+    createdAt,
+    updatedAt,
+    contactName,
+    contactPhone,
+    contactEmail,
+    contactWhatsApp,
+    ...rest
+  } = listingData;
+
+  const { contact, ...restWithoutContact } = rest;
+  const existingContact = (contact as Record<string, unknown> | undefined) ?? {};
+
+  const payload: Record<string, unknown> = {
+    ...restWithoutContact,
+    status: (restWithoutContact.status as string) ?? 'pending',
+    contact: cleanObject({
+      ...existingContact,
+      name: contactName ?? existingContact.name,
+      phone: contactPhone ?? existingContact.phone,
+      email: contactEmail ?? existingContact.email,
+      whatsapp: contactWhatsApp ?? existingContact.whatsapp,
+    }),
+  };
+
+  const sanitizedPayload = cleanObject(payload);
+
+  const docRef = await addDoc(collection(db, LISTINGS_COLLECTION), {
+    ...sanitizedPayload,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  return docRef.id;
+};
+
+export const updateListing = async (
+  listingId: string,
+  updates: Partial<Omit<Listing, 'id'>> & Record<string, unknown>
+): Promise<void> => {
+  const { contactName, contactPhone, contactEmail, contactWhatsApp, ...rest } = updates;
+
+  const { contact, ...restWithoutContact } = rest;
+  const existingContact = (contact as Record<string, unknown> | undefined) ?? {};
+
+  const payload: Record<string, unknown> = {
+    ...restWithoutContact,
+    contact: cleanObject({
+      ...existingContact,
+      name: contactName ?? existingContact.name,
+      phone: contactPhone ?? existingContact.phone,
+      email: contactEmail ?? existingContact.email,
+      whatsapp: contactWhatsApp ?? existingContact.whatsapp,
+    }),
+    updatedAt: serverTimestamp(),
+  };
+
+  const sanitizedPayload = cleanObject(payload);
+
+  await updateDoc(doc(db, LISTINGS_COLLECTION, listingId), sanitizedPayload);
+};
+
+export const deleteListing = async (listingId: string): Promise<void> => {
+  await deleteDoc(doc(db, LISTINGS_COLLECTION, listingId));
+};
+
+export const getListingById = async (listingId: string): Promise<Listing | null> => {
+  try {
+    const snapshot = await getDoc(doc(db, LISTINGS_COLLECTION, listingId));
+    if (!snapshot.exists()) {
+      return null;
+    }
+    return mapListingDoc(snapshot as unknown as QueryDocumentSnapshot<DocumentData>);
+  } catch (error) {
+    console.error('Error fetching listing by id:', error);
+    throw error;
+  }
+};
+
+export const getUserById = async (userId: string): Promise<User | null> => {
+  try {
+    const snapshot = await getDoc(doc(db, USERS_COLLECTION, userId));
+    if (!snapshot.exists()) {
+      return null;
+    }
+    return mapUserDoc(snapshot as unknown as QueryDocumentSnapshot<DocumentData>);
+  } catch (error) {
+    console.error('Error fetching user by id:', error);
+    throw error;
+  }
+};
+
+export const getAllUsers = async (): Promise<User[]> => {
+  try {
+    const usersRef = collection(db, USERS_COLLECTION);
+    const usersQuery = query(usersRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(usersQuery);
+    return snapshot.docs.map(mapUserDoc);
+  } catch (error) {
+    console.warn('Falling back to unordered users fetch', error);
+    const docs = await fallbackOrderQuery(USERS_COLLECTION);
+    return docs.map(mapUserDoc);
+  }
+};
+
+export const approveVerification = async (listingId: string): Promise<void> => {
+  await updateDoc(doc(db, LISTINGS_COLLECTION, listingId), {
+    verified: true,
+    status: 'active',
+    updatedAt: serverTimestamp(),
+  });
+};
+
 export const blockUser = async (userId: string): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  console.log(`Blocking user ${userId}`);
-  // In a real app, this would update the user's status in the database
+  await updateDoc(doc(db, USERS_COLLECTION, userId), {
+    status: 'blocked',
+    updatedAt: serverTimestamp(),
+  });
 };

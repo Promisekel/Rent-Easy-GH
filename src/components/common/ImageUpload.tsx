@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, X, Camera, Image as ImageIcon, CheckCircle, AlertCircle } from 'lucide-react';
 import directUploadToCloudinary from '../../utils/directUpload';
+import emergencyUploadWithProgress from '../../utils/emergencyUpload';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
@@ -103,6 +104,16 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 ? { ...img, progress }
                 : img
             ));
+          }).catch(async (error) => {
+            console.warn('⚠️ Direct upload failed, trying emergency method:', error);
+            // Fallback to emergency method if direct upload fails
+            return emergencyUploadWithProgress(file, (progress: number) => {
+              setImages(prev => prev.map((img, i) => 
+                i === prev.length - fileArray.length + index 
+                  ? { ...img, progress }
+                  : img
+              ));
+            });
           });
         });
 
@@ -160,6 +171,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
         const result = await directUploadToCloudinary(file, (progress: number) => {
           setImages(prev => [{ ...prev[0], progress }]);
+        }).catch(async (error) => {
+          console.warn('⚠️ Direct upload failed, trying emergency method:', error);
+          // Fallback to emergency method if direct upload fails
+          return emergencyUploadWithProgress(file, (progress: number) => {
+            setImages(prev => [{ ...prev[0], progress }]);
+          });
         });
 
         const uploadedImage: UploadedImage = {

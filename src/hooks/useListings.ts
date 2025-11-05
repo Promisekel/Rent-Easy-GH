@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Listing } from '../types/Listing';
 import { getListings } from '../services/firebase';
 
@@ -7,27 +7,7 @@ export const useListings = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchListings = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                
-                // Fetch listings from Firebase mock service
-                const fetchedListings = await getListings();
-                setListings(fetchedListings);
-            } catch (err) {
-                console.error('Error fetching listings:', err);
-                setError('Failed to fetch listings');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchListings();
-    }, []);
-
-    const fetchListings = async (userId?: string): Promise<void> => {
+    const fetchListings = useCallback(async (userId?: string): Promise<void> => {
         setLoading(true);
         setError(null);
 
@@ -48,7 +28,11 @@ export const useListings = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        void fetchListings();
+    }, [fetchListings]);
 
     const addListing = async (listing: Omit<Listing, 'id' | 'createdAt'>) => {
         try {

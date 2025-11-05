@@ -47,8 +47,8 @@ const Header: React.FC<HeaderProps> = ({ onAuthClick }) => {
   };
 
   const navItems = [
-    { label: 'Browse', href: '/', icon: Search },
-    { label: 'Locations', href: '/', icon: MapPin },
+    { label: 'Browse', href: '/browse', icon: Search },
+    { label: 'Locations', href: '/locations', icon: MapPin },
     { label: 'How it Works', href: '/' },
     { label: 'Contact', href: '/contact' }
   ];
@@ -133,7 +133,7 @@ const Header: React.FC<HeaderProps> = ({ onAuthClick }) => {
             <motion.button 
               whileHover={{ scale: 1.05, y: -1 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate(currentUser ? '/my-dashboard' : '/auth')}
+              onClick={() => navigate(currentUser ? '/dashboard' : '/auth')}
               className="btn-ghost px-4 py-2"
             >
               {currentUser ? 'Dashboard' : 'Sign In'}

@@ -8,7 +8,7 @@ const AuthPage: React.FC = () => {
 
   const handleAuthSuccess = () => {
     // Redirect to dashboard or home page
-    window.location.href = '/my-dashboard';
+    window.location.href = '/dashboard';
   };
 
   const toggleMode = () => {

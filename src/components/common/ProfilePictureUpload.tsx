@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Upload, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { uploadImageToCloudinary } from '../../utils/cloudinary';
 import { updateProfile } from 'firebase/auth';
@@ -13,10 +13,14 @@ interface ProfilePictureUploadProps {
 }
 
 const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({ currentPhotoURL }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, refreshUserProfile } = useAuth();
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(currentPhotoURL ?? currentUser?.photoURL ?? null);
+
+  useEffect(() => {
+    setPhotoUrl(currentPhotoURL ?? currentUser?.photoURL ?? null);
+  }, [currentPhotoURL, currentUser?.photoURL]);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -35,7 +39,6 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({ currentPhot
     }
 
     setUploading(true);
-    setProgress(0);
 
     try {
       // Upload to Cloudinary
@@ -44,35 +47,42 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({ currentPhot
       // Update user profile in Firestore
       const userDocRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userDocRef, {
-        photoURL: photoURL,
-        updatedAt: new Date()
+        photoURL,
+        updatedAt: serverTimestamp()
       });
 
       // Update Firebase Auth profile
       await updateProfile(currentUser, {
-        photoURL: photoURL
+        photoURL
       });
 
+      setPhotoUrl(photoURL);
+
+      try {
+        const updatedProfile = await refreshUserProfile();
+        if (updatedProfile?.photoURL) {
+          setPhotoUrl(updatedProfile.photoURL);
+        }
+      } catch (profileError) {
+        console.warn('ProfilePictureUpload: failed to refresh profile', profileError);
+      }
+
       toast.success('Profile picture updated successfully!');
-      
-      // Refresh the page to show the new profile picture
-      window.location.reload();
 
     } catch (error) {
       console.error('Error uploading profile picture:', error);
       toast.error('Failed to upload profile picture');
     } finally {
       setUploading(false);
-      setProgress(0);
     }
   };
 
   return (
     <div className="relative group">
       <div className="w-32 h-32 mx-auto md:mx-0 mb-4 rounded-full overflow-hidden bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center relative">
-        {currentPhotoURL ? (
+        {photoUrl ? (
           <img
-            src={currentPhotoURL}
+            src={photoUrl}
             alt="Profile"
             className="w-full h-full object-cover"
           />
@@ -88,8 +98,7 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({ currentPhot
         {/* Progress overlay */}
         {uploading && (
           <div className="absolute inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mb-2"></div>
-            <span className="text-white text-xs">{progress}%</span>
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
       </div>

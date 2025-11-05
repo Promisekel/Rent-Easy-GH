@@ -25,6 +25,13 @@ service cloud.firestore {
       allow create: if request.auth != null;
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.uploadedBy;
     }
+
+    // Direct uploads from the listing flow (stored in listing_images collection)
+    match /listing_images/{imageId} {
+      allow read: if true; // Listing photos can be public
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.uid;
+    }
     
     // Payments - users can only access their own payment records
     match /payments/{paymentId} {

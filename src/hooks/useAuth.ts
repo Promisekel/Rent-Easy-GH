@@ -20,7 +20,7 @@ const useAuth = () => {
             role: 'renter',
             verified: true,
             favorites: [],
-            createdAt: new Date()
+            createdAt: new Date().toISOString()
         };
 
         // Simulate loading delay
@@ -41,7 +41,7 @@ const useAuth = () => {
                 role: 'renter',
                 verified: true,
                 favorites: [],
-                createdAt: new Date()
+                createdAt: new Date().toISOString()
             };
             
             setTimeout(() => {
@@ -66,7 +66,7 @@ const useAuth = () => {
                 role: 'renter',
                 verified: false,
                 favorites: [],
-                createdAt: new Date()
+                createdAt: new Date().toISOString()
             };
             
             setTimeout(() => {

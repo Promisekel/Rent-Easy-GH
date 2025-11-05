@@ -23,10 +23,14 @@ const UserCard: React.FC<UserCardProps> = ({ user, onBlock }) => {
                             <Mail className="w-4 h-4" />
                             <span>{user.email}</span>
                         </div>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600 mt-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>Joined {user.createdAt.toLocaleDateString()}</span>
-                        </div>
+                        {user.createdAt && (
+                            <div className="flex items-center space-x-2 text-sm text-gray-600 mt-1">
+                                <Calendar className="w-4 h-4" />
+                                <span>
+                                    Joined {new Date(user.createdAt).toLocaleDateString()}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
                 <div className="flex items-center space-x-2">
